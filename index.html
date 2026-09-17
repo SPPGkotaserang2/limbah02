@@ -149,7 +149,8 @@
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
                             <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <input type="file" name="media" required multiple accept="image/*" capture="environment" onchange="previewLocalImages(event, 'preview_penjualan')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <!-- Diperbaiki: Atribut capture dihapus agar galeri & kamera HP dapat merespons dengan normal -->
+                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_penjualan')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_penjualan" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
                         <div class="md:col-span-2 lg:col-span-3 flex justify-end">
@@ -209,7 +210,8 @@
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
                             <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <input type="file" name="media" required multiple accept="image/*" capture="environment" onchange="previewLocalImages(event, 'preview_pembelian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <!-- Diperbaiki: Atribut capture dihapus agar galeri & kamera HP dapat merespons dengan normal -->
+                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembelian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_pembelian" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
                         <div class="md:col-span-2 lg:col-span-3 flex justify-end">
@@ -265,7 +267,8 @@
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
                             <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <input type="file" name="media" required multiple accept="image/*" capture="environment" onchange="previewLocalImages(event, 'preview_pembagian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <!-- Diperbaiki: Atribut capture dihapus agar galeri & kamera HP dapat merespons dengan normal -->
+                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembagian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_pembagian" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
                         <div class="md:col-span-2 lg:col-span-3 flex justify-end">
@@ -569,7 +572,7 @@
 
         window.calculateTotal = function(type) {
             if (type === 'penjualan' || type === 'pembelian') {
-                const qty = parseFloat(document.getElementById(`qty_${type}`).value) || 0;
+                const qty = parseFloat(document.getElementById(`banyaknya_${type}`).value) || 0;
                 const harga = parseFloat(document.getElementById(`harga_${type}`).value) || 0;
                 document.getElementById(`jumlah_${type}`).value = formatRupiah(qty * harga);
             } else if (type === 'pembagian') {
