@@ -149,7 +149,6 @@
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
                             <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <!-- Diperbaiki: Atribut capture dihapus agar galeri & kamera HP dapat merespons dengan normal -->
                             <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_penjualan')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_penjualan" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
@@ -169,7 +168,7 @@
                             <span class="text-xs text-gray-500 font-medium">s/d:</span>
                             <input type="date" id="end_penjualan" onchange="loadTableData('penjualan')" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs">
                             <button onclick="resetFilter('penjualan')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition">Hari Ini</button>
-                            <button onclick="downloadNotaPerHari('penjualan')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
+                            <button onclick="openNotaPreviewModal('penjualan')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
                         </div>
                     </div>
                     <div id="tableContainer_penjualan" class="overflow-x-auto"></div>
@@ -210,7 +209,6 @@
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
                             <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <!-- Diperbaiki: Atribut capture dihapus agar galeri & kamera HP dapat merespons dengan normal -->
                             <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembelian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_pembelian" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
@@ -230,7 +228,7 @@
                             <span class="text-xs text-gray-500 font-medium">s/d:</span>
                             <input type="date" id="end_pembelian" onchange="loadTableData('pembelian')" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs">
                             <button onclick="resetFilter('pembelian')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition">Hari Ini</button>
-                            <button onclick="downloadNotaPerHari('pembelian')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
+                            <button onclick="openNotaPreviewModal('pembelian')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
                         </div>
                     </div>
                     <div id="tableContainer_pembelian" class="overflow-x-auto"></div>
@@ -267,7 +265,6 @@
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
                             <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <!-- Diperbaiki: Atribut capture dihapus agar galeri & kamera HP dapat merespons dengan normal -->
                             <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembagian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_pembagian" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
@@ -287,7 +284,7 @@
                             <span class="text-xs text-gray-500 font-medium">s/d:</span>
                             <input type="date" id="end_pembagian" onchange="loadTableData('pembagian')" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs">
                             <button onclick="resetFilter('pembagian')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition">Hari Ini</button>
-                            <button onclick="downloadNotaPerHari('pembagian')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
+                            <button onclick="openNotaPreviewModal('pembagian')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
                         </div>
                     </div>
                     <div id="tableContainer_pembagian" class="overflow-x-auto"></div>
@@ -339,15 +336,39 @@
             </div>
             <div class="p-4 bg-gray-50 border-t flex justify-end space-x-3">
                 <button onclick="closeMediaModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-xl text-xs">Tutup</button>
-                <a id="downloadImageBtn" href="" target="_blank" download class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-xs shadow flex items-center">
+                <button id="downloadImageBtn" onclick="downloadCurrentMediaImage()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-xs shadow flex items-center">
                     <i class="fa-solid fa-download mr-1.5"></i> Unduh Gambar
-                </a>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRATINJAU NOTA HARIAN -->
+    <div id="notaPreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
+            <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-file-lines mr-2 text-emerald-600"></i>Pratinjau Nota</h3>
+                <button onclick="closeNotaPreviewModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 flex items-center justify-center bg-gray-100 overflow-auto flex-1">
+                <div id="notaPreviewWrapper" class="transform scale-90 origin-top">
+                    <!-- Konten Nota yang ditampilkan secara visual -->
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-between items-center">
+                <p class="text-xs text-gray-500">Tekan tombol di samping untuk mengunduh.</p>
+                <div class="flex space-x-3">
+                    <button onclick="closeNotaPreviewModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-xl text-xs">Batal</button>
+                    <button id="confirmDownloadNotaBtn" onclick="executeDownloadNota()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-xs shadow flex items-center">
+                        <i class="fa-solid fa-download mr-1.5"></i> Langsung Unduh Nota
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- TEMPLATE NOTA REKAPITULASI HARIAN TERSEMBUNYI -->
-    <div id="notaContainer" class="hidden fixed left-[-9999px] top-0">
+    <div id="notaContainer" class="fixed left-[-9999px] top-0 opacity-0 pointer-events-none z-[-999]">
         <div id="notaBox" class="bg-white w-[550px] p-8 text-gray-800 font-sans border border-gray-200 shadow-xl rounded-2xl">
             <div class="text-center border-b pb-4 mb-4">
                 <h2 id="notaHeaderTitle" class="font-bold text-lg text-emerald-700 uppercase">BUKTI TRANSAKSI NOTA</h2>
@@ -401,6 +422,8 @@
         const WA_TARGET = '6283111399112';
 
         window.appData = { penjualan: [], pembelian: [], pembagian: [] };
+        window.currentNotaDownloadInfo = { type: '', startDate: '' };
+        window.currentMediaUrl = '';
 
         function getTodayDateString() {
             const today = new Date();
@@ -410,7 +433,6 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
-        // Format tanggal ke DD/MM/YYYY
         function formatDateID(dateString) {
             if (!dateString) return '-';
             const parts = dateString.split('-');
@@ -838,8 +860,7 @@
             container.innerHTML = html;
         };
 
-        // Unduh Nota Gabungan Per Hari dengan Format Baru
-        window.downloadNotaPerHari = async function(type) {
+        window.openNotaPreviewModal = function(type) {
             const startDate = document.getElementById(`start_${type}`).value;
             const endDate = document.getElementById(`end_${type}`).value;
 
@@ -853,6 +874,8 @@
                 showToast('Kosong', 'Tidak ada data pada tanggal ' + formatDateID(startDate), 'error');
                 return;
             }
+
+            window.currentNotaDownloadInfo = { type, startDate };
 
             document.getElementById('notaHeaderTitle').innerText = `BUKTI TRANSAKSI ${type.toUpperCase()} `;
             document.getElementById('notaHeaderTanggal').innerText = `Tanggal: ${formatDateID(startDate)}`;
@@ -897,25 +920,89 @@
             document.getElementById('notaTableBody').innerHTML = tbodyHtml;
             document.getElementById('notaHeaderTotal').innerText = formatRupiah(grandTotal);
 
-            const notaContainer = document.getElementById('notaContainer');
-            const notaBox = document.getElementById('notaBox');
-            notaContainer.classList.remove('hidden');
+            const notaBoxContent = document.getElementById('notaBox').outerHTML;
+            document.getElementById('notaPreviewWrapper').innerHTML = notaBoxContent;
 
+            document.getElementById('notaPreviewModal').classList.remove('hidden');
+        };
+
+        window.closeNotaPreviewModal = function() {
+            document.getElementById('notaPreviewModal').classList.add('hidden');
+        };
+
+        // Fungsi Unduh Nota Stabil dengan Kloning Independen
+        window.executeDownloadNota = function() {
+            const { type, startDate } = window.currentNotaDownloadInfo;
+            const notaBoxOriginal = document.getElementById('notaBox');
+            
+            if (!notaBoxOriginal) {
+                showToast('Gagal', 'Data nota tidak ditemukan untuk diunduh.', 'error');
+                closeNotaPreviewModal();
+                return;
+            }
+
+            closeNotaPreviewModal();
+
+            const cloneBox = notaBoxOriginal.cloneNode(true);
+            cloneBox.style.position = 'fixed';
+            cloneBox.style.left = '-9999px';
+            cloneBox.style.top = '0px';
+            cloneBox.style.opacity = '1';
+            cloneBox.style.zIndex = '99999';
+            document.body.appendChild(cloneBox);
+
+            setTimeout(() => {
+                html2canvas(cloneBox, { 
+                    scale: 2, 
+                    useCORS: true, 
+                    logging: false,
+                    backgroundColor: '#ffffff' 
+                }).then(canvas => {
+                    const imageURL = canvas.toDataURL('image/png');
+                    
+                    const link = document.createElement('a');
+                    link.href = imageURL;
+                    link.download = `Nota_Rekap_${type}_${startDate}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    if (document.body.contains(cloneBox)) document.body.removeChild(cloneBox);
+                    
+                    showToast('Berhasil', 'Nota harian berhasil diunduh.', 'success');
+                }).catch(err => {
+                    console.error(err);
+                    if (document.body.contains(cloneBox)) document.body.removeChild(cloneBox);
+                    showToast('Gagal', 'Gagal mengunduh nota rekap.', 'error');
+                });
+            }, 100);
+        };
+
+        window.downloadCurrentMediaImage = async function() {
+            if (!window.currentMediaUrl) return;
             try {
-                showToast('Memproses', 'Membuat file nota rekapitulasi harian...', 'info');
-                const canvas = await html2canvas(notaBox, { scale: 2 });
-                const image = canvas.toDataURL('image/png');
+                showToast('Mengunduh', 'Sedang mengunduh gambar ke penyimpanan lokal...', 'info');
                 
+                const response = await fetch(window.currentMediaUrl);
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+
                 const link = document.createElement('a');
-                link.href = image;
-                link.download = `Nota_Rekap_${type}_${startDate}.png`;
+                link.href = blobUrl;
+                link.download = `Dokumentasi_Limbah_${Date.now()}.jpg`;
+                document.body.appendChild(link);
                 link.click();
-                showToast('Berhasil', 'Nota harian berhasil diunduh.', 'success');
-            } catch (err) {
-                console.error(err);
-                showToast('Gagal', 'Gagal mengunduh nota rekap.', 'error');
-            } finally {
-                notaContainer.classList.add('hidden');
+                document.body.removeChild(link);
+                URL.revokeObjectURL(blobUrl);
+
+                showToast('Berhasil', 'Gambar berhasil diunduh.', 'success');
+            } catch (e) {
+                console.error("Gagal unduh langsung, membuka fallback link:", e);
+                const fallbackLink = document.createElement('a');
+                fallbackLink.href = window.currentMediaUrl;
+                fallbackLink.target = '_blank';
+                fallbackLink.download = `Dokumentasi_Limbah_${Date.now()}.jpg`;
+                fallbackLink.click();
             }
         };
 
@@ -948,13 +1035,14 @@
         };
 
         window.openMediaModal = function(url) {
+            window.currentMediaUrl = url;
             document.getElementById('modalImageElement').src = url;
-            document.getElementById('downloadImageBtn').href = url;
             document.getElementById('mediaModal').classList.remove('hidden');
         };
 
         window.closeMediaModal = function() {
             document.getElementById('mediaModal').classList.add('hidden');
+            window.currentMediaUrl = '';
         };
     </script>
 </body>
