@@ -1009,10 +1009,10 @@
         window.confirmDeleteItem = function(type, id) {
             showCustomConfirm(
                 'Hapus Data & Foto', 
-                'Apakah Anda yakin ingin menghapus data ini? Foto terkait di Google Drive juga akan dihapus secara permanen.', 
+                'Apakah Anda yakin ingin menghapus data ini? Foto terkait di Sistem juga akan dihapus secara permanen.', 
                 async function() {
                     try {
-                        showToast('Memproses', 'Menghapus data dan file terkait di Drive...', 'info');
+                        showToast('Memproses', 'Menghapus data dan file terkait di Sistem...', 'info');
                         
                         const itemData = window.appData[type].find(el => el.id === id);
                         
@@ -1025,7 +1025,7 @@
 
                         await deleteDoc(doc(db, type, id));
                         await loadAllDataFromFirebase();
-                        showToast('Berhasil Dihapus', 'Data dan foto terkait di Google Drive berhasil dihapus.', 'success');
+                        showToast('Berhasil Dihapus', 'Data dan foto terkait di Sistem berhasil dihapus.', 'success');
                     } catch (err) {
                         console.error(err);
                         showToast('Gagal Menghapus', 'Terjadi kesalahan saat menghapus data.', 'error');
