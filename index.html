@@ -1,754 +1,689 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SPPG KOTA SERANG SERANG SERANG 2 - Multi-Media Display Ultimate Grid</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background: #001f28; /* Background dasar gelap solid */
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      overflow: hidden;
-      color: #fff;
-      height: 100vh;
-      width: 100vw;
-    }
-
-    /* Layout Utama 3 Tampilan Layar */
-    .screen-container {
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 10;
-      background: linear-gradient(135deg, #70c1b3, #87ceeb, #5fa89f);
-    }
-
-    /* Sembunyikan Layar Utama Total saat Tahap 1-5 Aktif */
-    .screen-container.hidden-screen {
-      display: none !important;
-    }
-
-    .screen {
-      flex: 1;
-      height: 100%;
-      position: relative;
-      background-color: rgba(0, 0, 0, 0.25);
-      border-right: 3px solid rgba(255, 255, 255, 0.3);
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      backdrop-filter: blur(4px);
-    }
-
-    .screen:last-child {
-      border-right: none;
-    }
-
-    /* Penataan Elemen Media (Gambar & Video Normal) */
-    .media-element {
-      max-width: 96%;
-      max-height: 96%;
-      object-fit: contain;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0.95);
-      opacity: 0;
-      transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-    }
-
-    .media-element.active {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-
-    /* Banner Overlay untuk Aktivasi Suara */
-    #sound-overlay {
-      position: fixed;
-      bottom: 25px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #005f73;
-      border: 2px solid #e0fbfc;
-      border-radius: 30px;
-      padding: 12px 30px;
-      z-index: 100001;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
-      animation: bounceOverlay 2s infinite;
-      transition: opacity 0.5s ease;
-    }
-
-    #sound-overlay span {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #e0fbfc;
-      letter-spacing: 1px;
-    }
-
-    .intro-card {
-      width: 90%;
-      height: 85%;
-      border-radius: 16px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      padding: 30px;
-      background: rgba(0, 77, 86, 0.85);
-      border: 2px solid #e0fbfc;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    }
-
-    .intro-text {
-      font-size: 1.8rem;
-      font-weight: 800;
-      line-height: 1.4;
-      color: #ffffff;
-      text-shadow: 0 0 10px rgba(224, 251, 252, 0.5);
-    }
-
-    /* ========================================================= */
-    /* OVERLAY STAGE FULLSCREEN SOLID                             */
-    /* ========================================================= */
-    .fullscreen-stage-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-image: url('logo.png');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-color: #001f28; 
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      transition: opacity 0.4s ease-in-out;
-      z-index: 99990;
-    }
-
-    .fullscreen-stage-overlay.show {
-      display: flex !important;
-      opacity: 1 !important;
-    }
-
-    /* TAHAP 1: LAYAR FULLSCREEN KATA MOTIVASI */
-    #fullscreen-quote-screen {
-      z-index: 99991;
-      text-align: center;
-      padding: 40px;
-    }
-
-    #fullscreen-quote-screen::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 31, 40, 0.90);
-      z-index: 1;
-    }
-
-    .quote-content-wrapper {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      max-width: 90%;
-    }
-
-    .sppg-title {
-      font-size: 3.5rem;
-      font-weight: 900;
-      color: #94d2bd;
-      letter-spacing: 5px;
-      margin-bottom: 30px;
-      text-shadow: 0 0 25px rgba(148, 210, 189, 0.8), 0 0 40px rgba(224, 251, 252, 0.5);
-      animation: pulseHeader 2s infinite alternate;
-    }
-
-    .quote-box {
-      background: rgba(0, 0, 0, 0.6);
-      padding: 50px 70px;
-      border-radius: 30px;
-      border: 2px solid rgba(224, 251, 252, 0.4);
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
-      max-width: 1100px;
-    }
-
-    .quote-text {
-      font-size: 2.8rem;
-      font-weight: 800;
-      color: #ffffff;
-      margin-bottom: 25px;
-      line-height: 1.4;
-      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
-      animation: floatText 4s ease-in-out infinite;
-    }
-
-    .quote-date {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: #e0fbfc;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      background: rgba(0, 95, 115, 0.9);
-      padding: 8px 24px;
-      border-radius: 20px;
-      display: inline-block;
-      border: 1px solid rgba(148, 210, 189, 0.6);
-    }
-
-    /* TAHAP 2: LAYAR FULLSCREEN VIDEO KHUSUS */
-    #fullscreen-video-overlay {
-      z-index: 99992;
-      background: #000000 !important;
-    }
-
-    #fullscreen-video-overlay video {
-      width: 100vw;
-      height: 100vh;
-      object-fit: fill;
-      position: relative;
-      z-index: 2;
-    }
-
-    /* TAHAP 3: LAYAR FULLSCREEN GAMBAR KHUSUS */
-    #fullscreen-image-overlay {
-      z-index: 99993;
-    }
-
-    #fullscreen-image-overlay::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 31, 40, 0.90);
-      z-index: 1;
-    }
-
-    #fullscreen-image-overlay img {
-      width: 90vw;
-      height: 90vh;
-      object-fit: contain;
-      position: relative;
-      z-index: 2;
-      border-radius: 16px;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
-    }
-
-    /* TAHAP 4 & 5: LAYAR FULLSCREEN GALERI 20 KOTAK FOTO */
-    #fullscreen-grid-overlay {
-      z-index: 99994;
-      padding: 20px;
-      justify-content: flex-start;
-    }
-
-    #fullscreen-grid-overlay::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 31, 40, 0.92);
-      z-index: 1;
-    }
-
-    .grid-header-title {
-      position: relative;
-      z-index: 2;
-      font-size: 2.2rem;
-      font-weight: 900;
-      color: #e0fbfc;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      margin-bottom: 15px;
-      text-shadow: 0 0 15px rgba(224, 251, 252, 0.6);
-      text-align: center;
-    }
-
-    .photo-grid-container {
-      position: relative;
-      z-index: 2;
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 12px;
-      width: 95vw;
-      height: 82vh;
-    }
-
-    .photo-card {
-      background: rgba(255, 255, 255, 0.15);
-      border: 2px solid rgba(224, 251, 252, 0.3);
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      position: relative;
-      opacity: 0;
-      transform: translateY(20px) scale(0.9);
-      transition: all 0.5s ease;
-    }
-
-    #fullscreen-grid-overlay.show .photo-card {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-
-    .photo-card img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    @keyframes bounceOverlay {
-      0%, 100% { transform: translate(-50%, 0); }
-      50% { transform: translate(-50%, -8px); }
-    }
-
-    @keyframes floatText {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-8px); }
-    }
-
-    @keyframes pulseHeader {
-      0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(148,210,189,0.5)); }
-      100% { transform: scale(1.03); filter: drop-shadow(0 0 25px rgba(148,210,189,0.9)); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Manajemen Keuangan &  Limbah</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.10/tailwindcss.min.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body>
+<body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
 
-  <!-- BANNER AKTIVASI SUARA -->
-  <div id="sound-overlay" onclick="enableAudio()">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e0fbfc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-    </svg>
-    <span>KLIK DI SINI UNTUK AKTIFKAN SUARA MULTIMEDIA & MOTIVASI</span>
-  </div>
-
-  <!-- CONTAINER UTAMA 3 LAYAR -->
-  <div class="screen-container" id="mainContainer">
-    
-    <!-- LAYAR 1 (KIRI) -->
-    <div class="screen" id="screen1">
-      <img src="gb/1.jpeg" class="media-element active" onerror="handleMediaError(this)">
-      <img src="gb/2.jpeg" class="media-element" onerror="handleMediaError(this)">
-      <img src="gb/3.jpeg" class="media-element" onerror="handleMediaError(this)">
-      <img src="gb/4.jpeg" class="media-element" onerror="handleMediaError(this)">
-      <img src="gb/5.jpeg" class="media-element" onerror="handleMediaError(this)">
-      
-      <div class="intro-card fallback-card" style="display: none;">
-        <h2 class="intro-text">"Masa depan diciptakan oleh apa yang Anda lakukan hari ini, bukan besok."</h2>
-      </div>
+    <!-- NOTIFIKASI / TOAST PROFESIONAL -->
+    <div id="toastNotification" class="fixed top-5 right-5 z-50 transform translate-y-[-200%] transition-all duration-300 max-w-sm w-full">
+        <div id="toastBox" class="flex items-center p-4 rounded-2xl shadow-xl border bg-white">
+            <div id="toastIcon" class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mr-3 text-lg"></div>
+            <div class="flex-1 mr-2">
+                <h4 id="toastTitle" class="font-bold text-sm text-gray-900"></h4>
+                <p id="toastMessage" class="text-xs text-gray-500 mt-0.5"></p>
+            </div>
+            <button onclick="hideToast()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
     </div>
 
-    <!-- LAYAR 2 (TENGAH) -->
-    <div class="screen" id="screen2">
-      <video id="normalVideoPlayer" class="media-element active" playsinline muted onerror="handleNormalVideoError(this)"></video>
-
-      <div class="intro-card fallback-card" id="screen2Fallback" style="display: none;">
-        <h2 class="intro-text">"Fokus pada proses, nikmati perjuangan, dan raih keberhasilan bersama."</h2>
-      </div>
+    <!-- MODAL KONFIRMASI KUSTOM -->
+    <div id="confirmModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center transform transition-all">
+            <div id="confirmIconContainer" class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirmTitle" class="text-lg font-bold text-gray-900 mb-2">Konfirmasi Tindakan</h3>
+            <p id="confirmMessage" class="text-xs text-gray-500 mb-6 leading-relaxed"></p>
+            <div class="flex space-x-3">
+                <button id="confirmCancelBtn" onclick="closeConfirmModal()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition-all">Batal</button>
+                <button id="confirmOkBtn" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-xs transition-all shadow-md shadow-red-600/30">Ya, Lanjutkan</button>
+            </div>
+        </div>
     </div>
 
-    <!-- LAYAR 3 (KANAN) -->
-    <div class="screen" id="screen3">
-      <img src="gb/1.jpeg" class="media-element active" onerror="handleMediaError(this)">
-      <img src="gb/2.jpeg" class="media-element" onerror="handleMediaError(this)">
-      <img src="gb/3.jpeg" class="media-element" onerror="handleMediaError(this)">
-      <img src="gb/4.jpeg" class="media-element" onerror="handleMediaError(this)">
-      <img src="gb/5.jpeg" class="media-element" onerror="handleMediaError(this)">
-
-      <div class="intro-card fallback-card" style="display: none;">
-        <h2 class="intro-text">"Inovasi dan semangat tak terbatas menuju masa depan yang gemilang."</h2>
-      </div>
+    <!-- HALAMAN LOGIN -->
+    <div id="loginPage" class="fixed inset-0 bg-gradient-to-br from-emerald-700 to-teal-900 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all">
+            <div class="text-center mb-8">
+                <!-- LOGO LOKAL -->
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-emerald-50 rounded-full mb-4 shadow-inner overflow-hidden border border-emerald-100">
+                    <img src="logo.png" alt="Logo Lokal" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=LOGO';">
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">Sistem Manajemen Limbah</h1>
+                <p class="text-sm text-gray-500 mt-1">Silakan masuk untuk melanjutkan</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" id="usernameInput" required class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" placeholder="Masukkan username">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Sandi</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" id="passwordInput" required class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm" placeholder="Masukkan sandi">
+                    </div>
+                </div>
+                <div id="loginError" class="hidden text-red-500 text-xs font-medium text-center bg-red-50 py-2 rounded-lg">Username atau Sandi salah!</div>
+                <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg shadow-emerald-600/30 transition-all text-sm">
+                    Masuk Sistem
+                </button>
+            </form>
+        </div>
     </div>
 
-  </div>
+    <!-- HALAMAN UTAMA APLIKASI -->
+    <div id="appPage" class="hidden flex-1 flex flex-col">
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-emerald-600 text-white p-2 rounded-xl shadow">
+                        <i class="fa-solid fa-recycle text-xl"></i>
+                    </div>
+                    <span class="font-bold text-lg text-gray-900">Sistem Data Limbah</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-xs font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200">
+                        <i class="fa-solid fa-shield-halved mr-1"></i> Admin
+                    </span>
+                    <button onclick="handleLogout()" class="text-gray-500 hover:text-red-600 text-sm font-medium">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> Keluar
+                    </button>
+                </div>
+            </div>
+        </header>
 
-  <!-- TAHAP 1: LAYAR FULLSCREEN KATA-KATA MOTIVASI -->
-  <div id="fullscreen-quote-screen" class="fullscreen-stage-overlay">
-    <div class="quote-content-wrapper">
-      <h1 class="sppg-title">SPPG KOTA SERANG SERANG 2</h1>
-      
-      <div class="quote-box">
-        <h2 class="quote-text" id="dailyQuote">"Memuat kata-kata motivasi..."</h2>
-        <p class="quote-date" id="currentDate"></p>
-      </div>
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+            <!-- Tab Menu -->
+            <div class="flex space-x-2 border-b border-gray-200 pb-4 mb-8 overflow-x-auto">
+                <button onclick="switchTab('penjualan')" id="tabBtn-penjualan" class="tab-btn px-5 py-2.5 rounded-xl font-semibold text-sm transition-all bg-emerald-600 text-white shadow-md flex items-center space-x-2">
+                    <i class="fa-solid fa-cash-register"></i><span>Penjualan</span>
+                </button>
+                <button onclick="switchTab('pembelian')" id="tabBtn-pembelian" class="tab-btn px-5 py-2.5 rounded-xl font-semibold text-sm transition-all bg-white text-gray-600 hover:bg-gray-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-cart-shopping"></i><span>Pembelian</span>
+                </button>
+                <button onclick="switchTab('pembagian')" id="tabBtn-pembagian" class="tab-btn px-5 py-2.5 rounded-xl font-semibold text-sm transition-all bg-white text-gray-600 hover:bg-gray-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-hand-holding-dollar"></i><span>Pembagian</span>
+                </button>
+                <button onclick="switchTab('saldo')" id="tabBtn-saldo" class="tab-btn px-5 py-2.5 rounded-xl font-semibold text-sm transition-all bg-white text-gray-600 hover:bg-gray-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-wallet"></i><span>Saldo & Riwayat</span>
+                </button>
+            </div>
+
+            <!-- PENJUALAN -->
+            <div id="content-penjualan" class="tab-content space-y-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-plus"></i></span>
+                        Tambah Data Penjualan
+                    </h2>
+                    <form onsubmit="saveData(event, 'penjualan')" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Tanggal</label>
+                            <input type="date" name="tanggal" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Nama Barang</label>
+                            <input type="text" name="namaBarang" required placeholder="Contoh: Botol Plastik" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Beratnya (Opsional)</label>
+                            <input type="text" name="berat" placeholder="Contoh: 15 Kg" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Banyaknya (Qty)</label>
+                            <input type="number" step="any" name="banyaknya" id="qty_penjualan" required oninput="calculateTotal('penjualan')" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Harga Satuan (Rp)</label>
+                            <input type="number" step="any" name="harga" id="harga_penjualan" required oninput="calculateTotal('penjualan')" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Jumlah Total</label>
+                            <input type="text" name="jumlah" id="jumlah_penjualan" readonly placeholder="Rp 0" class="w-full px-4 py-2.5 bg-emerald-50 font-bold text-emerald-700 border border-emerald-200 rounded-xl text-sm">
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3">
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
+                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_penjualan')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <div id="preview_penjualan" class="flex flex-wrap gap-2 mt-3"></div>
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3 flex justify-end">
+                            <button type="submit" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-md">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Penjualan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <h3 class="text-base font-bold text-gray-900 mb-6">Riwayat Data Penjualan</h3>
+                    <div id="tableContainer_penjualan" class="overflow-x-auto"></div>
+                </div>
+            </div>
+
+            <!-- PEMBELIAN -->
+            <div id="content-pembelian" class="tab-content hidden space-y-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-plus"></i></span>
+                        Tambah Data Pembelian
+                    </h2>
+                    <form onsubmit="saveData(event, 'pembelian')" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Tanggal</label>
+                            <input type="date" name="tanggal" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Nama Barang</label>
+                            <input type="text" name="namaBarang" required placeholder="Contoh: Kardus Bekas" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Beratnya (Opsional)</label>
+                            <input type="text" name="berat" placeholder="Contoh: 50 Kg" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Banyaknya (Qty)</label>
+                            <input type="number" step="any" name="banyaknya" id="qty_pembelian" required oninput="calculateTotal('pembelian')" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Harga Satuan (Rp)</label>
+                            <input type="number" step="any" name="harga" id="harga_pembelian" required oninput="calculateTotal('pembelian')" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Jumlah Total</label>
+                            <input type="text" name="jumlah" id="jumlah_pembelian" readonly placeholder="Rp 0" class="w-full px-4 py-2.5 bg-emerald-50 font-bold text-emerald-700 border border-emerald-200 rounded-xl text-sm">
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3">
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
+                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembelian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <div id="preview_pembelian" class="flex flex-wrap gap-2 mt-3"></div>
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3 flex justify-end">
+                            <button type="submit" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-md">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Pembelian
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <h3 class="text-base font-bold text-gray-900 mb-6">Riwayat Data Pembelian</h3>
+                    <div id="tableContainer_pembelian" class="overflow-x-auto"></div>
+                </div>
+            </div>
+
+            <!-- PEMBAGIAN -->
+            <div id="content-pembagian" class="tab-content hidden space-y-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                        <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-plus"></i></span>
+                        Tambah Data Pembagian
+                    </h2>
+                    <form onsubmit="saveData(event, 'pembagian')" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Tanggal</label>
+                            <input type="date" name="tanggal" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Nama Tim / Orang</label>
+                            <input type="text" name="namaTim" required placeholder="Contoh: Tim Pengangkut" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Jumlah Uang (Rp)</label>
+                            <input type="number" step="any" name="jumlahUang" id="jumlah_uang_pembagian" required oninput="calculateTotal('pembagian')" placeholder="0" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Jumlah Otomatis</label>
+                            <input type="text" name="jumlah" id="jumlah_pembagian" readonly placeholder="Rp 0" class="w-full px-4 py-2.5 bg-emerald-50 font-bold text-emerald-700 border border-emerald-200 rounded-xl text-sm">
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-2">
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
+                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembagian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <div id="preview_pembagian" class="flex flex-wrap gap-2 mt-3"></div>
+                        </div>
+                        <div class="md:col-span-2 lg:col-span-3 flex justify-end">
+                            <button type="submit" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-md">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Pembagian
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <h3 class="text-base font-bold text-gray-900 mb-6">Riwayat Data Pembagian</h3>
+                    <div id="tableContainer_pembagian" class="overflow-x-auto"></div>
+                </div>
+            </div>
+
+            <!-- SALDO -->
+            <div id="content-saldo" class="tab-content hidden space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
+                        <p class="text-xs uppercase tracking-wider text-emerald-100 font-semibold mb-1">Total Saldo Saat Ini</p>
+                        <h2 id="saldoTotalDisplay" class="text-3xl font-bold">Rp 0</h2>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Pemasukan</p>
+                        <h2 id="saldoPemasukanDisplay" class="text-2xl font-bold text-emerald-600">Rp 0</h2>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Pengeluaran</p>
+                        <h2 id="saldoPengeluaranDisplay" class="text-2xl font-bold text-red-600">Rp 0</h2>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <h3 class="text-base font-bold text-gray-900 mb-6"><i class="fa-solid fa-clock-rotate-left mr-2 text-emerald-600"></i>Riwayat Saldo</h3>
+                    <div id="tableContainer_saldo" class="overflow-x-auto"></div>
+                </div>
+            </div>
+        </main>
     </div>
-  </div>
 
-  <!-- TAHAP 2: LAYAR KHUSUS MEMUTAR VIDEO FULLSCREEN -->
-  <div id="fullscreen-video-overlay" class="fullscreen-stage-overlay">
-    <video id="fullVideoPlayer" playsinline muted></video>
-  </div>
-
-  <!-- TAHAP 3: LAYAR KHUSUS MENAMPILKAN GAMBAR FULLSCREEN -->
-  <div id="fullscreen-image-overlay" class="fullscreen-stage-overlay">
-    <img id="fullImagePlayer" src="" alt="Gambar Fullscreen">
-  </div>
-
-  <!-- TAHAP 4 & 5: LAYAR KHUSUS GALERI 20 KOTAK FOTO -->
-  <div id="fullscreen-grid-overlay" class="fullscreen-stage-overlay">
-    <h1 class="grid-header-title" id="gridHeaderTitle">DOKUMENTASI DAPUR SPPG KOTA SERANG SERANG 2</h1>
-    <div class="photo-grid-container" id="gridContainer">
-      <!-- 20 Kotak Foto Dimasukkan Otomatis via JS -->
+    <!-- MODAL MEDIA VIEWER -->
+    <div id="mediaModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
+                <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-image mr-2 text-emerald-600"></i>Pratinjau Foto Dokumentasi</h3>
+                <button onclick="closeMediaModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 flex items-center justify-center bg-black/5 overflow-auto flex-1">
+                <img id="modalImageElement" src="" class="max-h-[60vh] object-contain rounded-lg shadow" alt="Pratinjau Foto">
+            </div>
+            <div class="p-4 bg-gray-50 border-t flex justify-end space-x-3">
+                <button onclick="closeMediaModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-xl text-xs">Tutup</button>
+                <a id="downloadImageBtn" href="" target="_blank" download class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-xs shadow flex items-center">
+                    <i class="fa-solid fa-download mr-1.5"></i> Unduh Gambar
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    let imgInterval1, imgInterval3;
-    
-    // Konfigurasi Durasi & Putaran
-    const IMAGE_DISPLAY_TIME = 5000;       
-    const QUOTE_DISPLAY_TIME = 15000;      
-    const FULL_IMAGE_DISPLAY_TIME = 10000; 
-    const GRID_DISPLAY_TIME = 20000;       
-    
-    // TARGET JUMLAH VIDEO SEBELUM PINDAH TAHAP 1-5
-    const VIDEOS_PER_STAGE_CYCLE = 5;
-    let normalVideoCounter = 0; // Hitungan video yang sudah diputar
-
-    // LIST VIDEO vd/1.mp4 s/d vd/129.mp4
-    const normalVideosList = [];
-    for (let i = 1; i <= 129; i++) {
-      normalVideosList.push(`vd/${i}.mp4`);
-    }
-    
-    let currentNormalVideoIdx = 0; 
-    let isAudioEnabled = false;
-
-    // LIST FILE VIDEO KHUSUS FULLSCREEN
-    const fullVideosList = [
-      'videofull1.mp4',
-      
-    ];
-    let currentFullVideoIdx = 0;
-
-    // LIST FILE GAMBAR KHUSUS FULLSCREEN
-    const fullImagesList = [
-      'STR1.jpg',
-     
-    ];
-    let currentFullImageIdx = 0;
-
-    // LIST 1: 20 FOTO DOKUMENTASI DAPUR
-    const dapurPhotosList = [
-      'dapur/1.jpeg', 'dapur/2.jpeg', 'dapur/3.jpeg', 'dapur/4.jpeg', 'dapur/5.jpeg',
-      'dapur/6.jpeg', 'dapur/7.jpeg', 'dapur/8.jpeg', 'dapur/9.jpeg', 'dapur/10.jpeg',
-      'dapur/11.jpeg', 'dapur/12.jpeg', 'dapur/13.jpeg', 'dapur/14.jpeg', 'dapur/15.jpeg',
-      'dapur/16.jpeg', 'dapur/17.jpeg', 'dapur/18.jpeg', 'dapur/19.jpeg', 'dapur/20.jpeg'
-    ];
-
-    // LIST 2: 20 FOTO DISTRIBUSI PENERIMA MANFAAT
-    const distribusiPhotosList = [
-      'distribusi/1.jpeg', 'distribusi/2.jpeg', 'distribusi/3.jpeg', 'distribusi/4.jpeg', 'distribusi/5.jpeg',
-      'distribusi/6.jpeg', 'distribusi/7.jpeg', 'distribusi/8.jpeg', 'distribusi/9.jpeg', 'distribusi/10.jpeg',
-      'distribusi/11.jpeg', 'distribusi/12.jpeg', 'distribusi/13.jpeg', 'distribusi/14.jpeg', 'distribusi/15.jpeg',
-      'distribusi/16.jpeg', 'distribusi/17.jpeg', 'distribusi/18.jpeg', 'distribusi/19.jpeg', 'distribusi/20.jpeg'
-    ];
-
-    const subjects = [
-      "Kesuksesan sejati", "Impian besar Anda", "Keberanian tanpa batas", 
-      "Setiap langkah kecil hari ini", "Komitmen dan konsistensi", "Kerja keras yang gigih", 
-      "Kekuatan dalam diri Anda", "Inovasi tanpa henti", "Semangat pantang menyerah"
-    ];
-
-    const actions = [
-      "akan selalu membuka jalan bagi", "merupakan kunci utama untuk membuka", 
-      "selalu melahirkan hasil terbaik dalam", "pasti membawa perubahan luar biasa pada", 
-      "akan menjadi fondasi terkuat bagi", "selalu mampu menembus batas dalam"
-    ];
-
-    const targets = [
-      "masa depan yang jauh lebih cemerlang.", "pencapaian prestasi yang tak terhitung jumlahnya.", 
-      "kemenangan besar yang membanggakan.", "proses menuju puncak keberhasilan.", 
-      "kehidupan yang penuh keberkahan dan kebahagiaan.", "kemajuan yang tak pernah terhentikan."
-    ];
-
-    const inspirations = [
-      "Tetaplah melangkah walau perlahan!", "Percayalah pada proses luar biasa ini!", 
-      "Jadikan hari ini lebih baik dari kemarin!", "Bersama SPPG KOTA SERANG SERANG SERANG 2, kita bisa!", 
-      "Fokus pada tujuan, abai tantangan!", "Keberhasilan sudah di depan mata!"
-    ];
-
-    function generateInfiniteQuote() {
-      const s = subjects[Math.floor(Math.random() * subjects.length)];
-      const a = actions[Math.floor(Math.random() * actions.length)];
-      const t = targets[Math.floor(Math.random() * targets.length)];
-      const i = inspirations[Math.floor(Math.random() * inspirations.length)];
-      return `${s} ${a} ${t} ${i}`;
-    }
-
-    function hideAllStages() {
-      const overlays = document.querySelectorAll('.fullscreen-stage-overlay');
-      overlays.forEach(overlay => {
-        overlay.classList.remove('show');
-        overlay.style.display = 'none';
-      });
-    }
-
-    function showStage(element) {
-      const mainContainer = document.getElementById('mainContainer');
-      if (mainContainer) mainContainer.classList.add('hidden-screen');
-
-      hideAllStages(); 
-
-      element.style.display = 'flex';
-      void element.offsetWidth; 
-      element.classList.add('show');
-    }
-
-    function restoreMainContainer() {
-      hideAllStages();
-      const mainContainer = document.getElementById('mainContainer');
-      if (mainContainer) mainContainer.classList.remove('hidden-screen');
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      imgInterval1 = setupImageSlideshow('screen1', IMAGE_DISPLAY_TIME);
-      imgInterval3 = setupImageSlideshow('screen3', IMAGE_DISPLAY_TIME);
-
-      const normalPlayer = document.getElementById('normalVideoPlayer');
-      normalPlayer.addEventListener('ended', onNormalVideoEnded);
-
-      const fullPlayer = document.getElementById('fullVideoPlayer');
-      fullPlayer.addEventListener('ended', onFullVideoEnded);
-
-      playNormalVideoSequence();
-
-      document.body.addEventListener('click', enableAudio, { once: true });
-    });
-
-    function enableAudio() {
-      if (isAudioEnabled) return;
-      isAudioEnabled = true;
-
-      const overlay = document.getElementById('sound-overlay');
-      if (overlay) overlay.style.display = 'none';
-
-      const normalPlayer = document.getElementById('normalVideoPlayer');
-      const fullPlayer = document.getElementById('fullVideoPlayer');
-
-      normalPlayer.muted = false;
-      fullPlayer.muted = false;
-
-      normalPlayer.play().catch(e => console.log(e));
-    }
-
-    function setupImageSlideshow(screenId, intervalMs) {
-      const screen = document.getElementById(screenId);
-      let currentIndex = 0;
-
-      return setInterval(() => {
-        const validImages = Array.from(screen.querySelectorAll('img')).filter(img => img.style.display !== 'none');
-        if (validImages.length <= 1) return;
-
-        validImages[currentIndex].classList.remove('active');
-        currentIndex = (currentIndex + 1) % validImages.length;
-        validImages[currentIndex].classList.add('active');
-      }, intervalMs);
-    }
-
-    function playNormalVideoSequence() {
-      restoreMainContainer();
-      
-      const normalPlayer = document.getElementById('normalVideoPlayer');
-      const targetSrc = normalVideosList[currentNormalVideoIdx];
-
-      normalPlayer.src = targetSrc;
-      normalPlayer.muted = !isAudioEnabled;
-
-      normalPlayer.play().catch(e => {
-        console.log(`Video ${targetSrc} tidak dapat diputar, lanjut ke video berikutnya...`);
-        handleNormalVideoError();
-      });
-    }
-
-    /* LOGIKA DIPERBARUI: DUA PILIHAN ALUR SETELAH VIDEO SELESAI */
-    function onNormalVideoEnded() {
-      currentNormalVideoIdx = (currentNormalVideoIdx + 1) % normalVideosList.length;
-      normalVideoCounter++; // Tambah hitungan video yang diputar
-
-      // Cek apakah sudah memutar 5 video
-      if (normalVideoCounter >= VIDEOS_PER_STAGE_CYCLE) {
-        normalVideoCounter = 0; // Reset hitungan kembali ke 0
-        showDailyQuoteScreen(); // Masuk ke Tahap 1 - 5
-      } else {
-        playNormalVideoSequence(); // Lanjut memutar video berikutnya (video ke-2, 3, 4, dst.)
-      }
-    }
-
-    function handleNormalVideoError() {
-      currentNormalVideoIdx = (currentNormalVideoIdx + 1) % normalVideosList.length;
-      playNormalVideoSequence();
-    }
-
-    /* TAHAP 1: Menampilkan Kata Motivasi (30 Detik) */
-    function showDailyQuoteScreen() {
-      const normalPlayer = document.getElementById('normalVideoPlayer');
-      normalPlayer.pause();
-
-      const newQuote = generateInfiniteQuote();
-      document.getElementById('dailyQuote').innerText = `"${newQuote}"`;
-      
-      const today = new Date();
-      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      document.getElementById('currentDate').innerText = today.toLocaleDateString('id-ID', options);
-
-      const quoteScreen = document.getElementById('fullscreen-quote-screen');
-      showStage(quoteScreen);
-
-      speakQuote(newQuote);
-
-      setTimeout(() => {
-        closeQuoteAndPlayFullVideo();
-      }, QUOTE_DISPLAY_TIME);
-    }
-
-    function speakQuote(text) {
-      if ('speechSynthesis' in window && isAudioEnabled) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'id-ID';
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        window.speechSynthesis.speak(utterance);
-      }
-    }
-
-    function closeQuoteAndPlayFullVideo() {
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-      playDedicatedFullVideo();
-    }
-
-    /* TAHAP 2: Memutar Video Fullscreen Khusus */
-    function playDedicatedFullVideo() {
-      const fullOverlay = document.getElementById('fullscreen-video-overlay');
-      const fullPlayer = document.getElementById('fullVideoPlayer');
-
-      const targetVideoSrc = fullVideosList[currentFullVideoIdx];
-      currentFullVideoIdx = (currentFullVideoIdx + 1) % fullVideosList.length;
-
-      fullPlayer.src = targetVideoSrc;
-      fullPlayer.muted = !isAudioEnabled;
-
-      showStage(fullOverlay);
-
-      fullPlayer.play().catch(e => {
-        console.log("Gagal memutar video fullscreen, melewati...", e);
-        onFullVideoEnded();
-      });
-    }
-
-    /* TAHAP 3: Menampilkan Gambar Fullscreen Khusus (10 Detik) */
-    function onFullVideoEnded() {
-      const fullPlayer = document.getElementById('fullVideoPlayer');
-      fullPlayer.pause();
-
-      playDedicatedFullImage();
-    }
-
-    function playDedicatedFullImage() {
-      const imgOverlay = document.getElementById('fullscreen-image-overlay');
-      const imgPlayer = document.getElementById('fullImagePlayer');
-
-      const targetImgSrc = fullImagesList[currentFullImageIdx];
-      currentFullImageIdx = (currentFullImageIdx + 1) % fullImagesList.length;
-
-      imgPlayer.src = targetImgSrc;
-
-      showStage(imgOverlay);
-
-      setTimeout(() => {
-        playDapurGridPhotos();
-      }, FULL_IMAGE_DISPLAY_TIME);
-    }
-
-    /* TAHAP 4: Menampilkan Layar 20 Kotak Foto DOKUMENTASI DAPUR (20 Detik) */
-    function playDapurGridPhotos() {
-      renderPhotoGrid('DOKUMENTASI DAPUR SPPG KOTA SERANG SERANG SERANG 2', dapurPhotosList);
-
-      const gridOverlay = document.getElementById('fullscreen-grid-overlay');
-      showStage(gridOverlay);
-
-      setTimeout(() => {
-        playDistribusiGridPhotos();
-      }, GRID_DISPLAY_TIME);
-    }
-
-    /* TAHAP 5: Menampilkan Layar 20 Kotak Foto DOKUMENTASI DISTRIBUSI PENERIMA MANFAAT (20 Detik) */
-    function playDistribusiGridPhotos() {
-      renderPhotoGrid('DOKUMENTASI DISTRIBUSI PENERIMA MANFAAT', distribusiPhotosList);
-
-      const gridOverlay = document.getElementById('fullscreen-grid-overlay');
-      showStage(gridOverlay);
-
-      setTimeout(() => {
-        // KEMBALI KE LAYAR UTAMA (Akan memutar 5 video lagi)
-        playNormalVideoSequence();
-      }, GRID_DISPLAY_TIME);
-    }
-
-    /* FUNGSI RENDERING GRID FOTO */
-    function renderPhotoGrid(titleText, photosArray) {
-      document.getElementById('gridHeaderTitle').innerText = titleText;
-      const gridContainer = document.getElementById('gridContainer');
-
-      gridContainer.innerHTML = '';
-      photosArray.forEach((photoSrc, index) => {
-        const card = document.createElement('div');
-        card.className = 'photo-card';
-        card.style.transitionDelay = `${index * 0.03}s`;
-        card.innerHTML = `<img src="${photoSrc}" onerror="this.src='media/gambar1.jpeg'">`;
-        gridContainer.appendChild(card);
-      });
-    }
-
-    function handleMediaError(element) {
-      element.style.display = 'none';
-      const parent = element.parentElement;
-      
-      const remainingElements = Array.from(parent.children).filter(el => 
-        (el.tagName === 'IMG' || el.tagName === 'VIDEO') && el.style.display !== 'none'
-      );
-
-      if (remainingElements.length === 0) {
-        const fallbackCard = parent.querySelector('.fallback-card');
-        if (fallbackCard) {
-          fallbackCard.style.display = 'flex';
+    <!-- SCRIPT FIREBASE & APLIKASI -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-4SHVseJrabUxIOCjup1KuNmxq22TJK4",
+            authDomain: "limbah-972c1.firebaseapp.com",
+            projectId: "limbah-972c1",
+            storageBucket: "limbah-972c1.firebasestorage.app",
+            messagingSenderId: "858465641305",
+            appId: "1:858465641305:web:4c69ecb84d1a7246c02248",
+            measurementId: "G-R96LK61QVQ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzMpMNbZmS6682wqt4zCa_I0ATjjefLmNCMEbSjRarNpM2gyucyBAe6DneXj49ioUMMQ/exec';
+        
+        // Konfigurasi WhatsApp (Fonnte)
+        const WA_TOKEN = 'uJ8CF79nyQaJbPrVGeeE';
+        const WA_TARGET = '6283111399112';
+
+        window.appData = { penjualan: [], pembelian: [], pembagian: [] };
+
+        async function sendWhatsAppNotification(message) {
+            try {
+                const bodyData = new URLSearchParams();
+                bodyData.append('target', WA_TARGET);
+                bodyData.append('message', message);
+                bodyData.append('token', WA_TOKEN);
+
+                await fetch('https://api.fonnte.com/send', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': WA_TOKEN
+                    },
+                    body: bodyData
+                });
+            } catch (err) {
+                console.error("Gagal mengirim pesan WhatsApp:", err);
+            }
         }
-      }
-    }
-  </script>
 
+        window.showToast = function(title, message, type = 'success') {
+            const toast = document.getElementById('toastNotification');
+            const toastBox = document.getElementById('toastBox');
+            const toastIcon = document.getElementById('toastIcon');
+            document.getElementById('toastTitle').innerText = title;
+            document.getElementById('toastMessage').innerText = message;
+
+            toastIcon.className = "flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mr-3 text-lg ";
+            if (type === 'success') {
+                toastIcon.classList.add('bg-emerald-100', 'text-emerald-600');
+                toastIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                toastBox.className = "flex items-center p-4 rounded-2xl shadow-xl border border-emerald-100 bg-white";
+            } else if (type === 'error') {
+                toastIcon.classList.add('bg-red-100', 'text-red-600');
+                toastIcon.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+                toastBox.className = "flex items-center p-4 rounded-2xl shadow-xl border border-red-100 bg-white";
+            } else {
+                toastIcon.classList.add('bg-amber-100', 'text-amber-600');
+                toastIcon.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+                toastBox.className = "flex items-center p-4 rounded-2xl shadow-xl border border-amber-100 bg-white";
+            }
+
+            toast.classList.remove('translate-y-[-200%]');
+            toast.classList.add('translate-y-0');
+
+            setTimeout(() => { hideToast(); }, 4000);
+        };
+
+        window.hideToast = function() {
+            const toast = document.getElementById('toastNotification');
+            toast.classList.remove('translate-y-0');
+            toast.classList.add('translate-y-[-200%]');
+        };
+
+        window.showCustomConfirm = function(title, message, callback) {
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmMessage').innerText = message;
+            const okBtn = document.getElementById('confirmOkBtn');
+            
+            const newOkBtn = okBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+
+            newOkBtn.addEventListener('click', function() {
+                closeConfirmModal();
+                if (callback) callback();
+            });
+
+            document.getElementById('confirmModal').classList.remove('hidden');
+        };
+
+        window.closeConfirmModal = function() {
+            document.getElementById('confirmModal').classList.add('hidden');
+        };
+
+        // Cek Sesi dan Otomatis Logout Setelah 1 Jam (3600000 ms)
+        window.onload = function() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const loginTime = parseInt(localStorage.getItem('loginTime') || '0', 10);
+            const now = new Date().getTime();
+            const oneHour = 60 * 60 * 1000;
+
+            if (isLoggedIn && (now - loginTime < oneHour)) {
+                showApp();
+            } else {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('loginTime');
+            }
+        };
+
+        window.handleLogin = async function(e) {
+            e.preventDefault();
+            const user = document.getElementById('usernameInput').value;
+            const pass = document.getElementById('passwordInput').value;
+            if (user === 'Admin' && pass === 'Limbah02') {
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('loginTime', new Date().getTime().toString());
+                
+                showToast('Login Berhasil', 'Selamat datang kembali di Sistem Data Limbah', 'success');
+                showApp();
+
+                // Kirim Notifikasi WhatsApp Login
+                await sendWhatsAppNotification("🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAdmin berhasil *MASUK (LOGIN)* ke dalam Sistem Manajemen Limbah pada " + new Date().toLocaleString('id-ID'));
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+                showToast('Gagal Masuk', 'Username atau sandi yang Anda masukkan salah.', 'error');
+            }
+        };
+
+        window.handleLogout = function() {
+            showCustomConfirm('Konfirmasi Keluar', 'Apakah Anda yakin ingin keluar dari sistem?', async function() {
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('loginTime');
+                document.getElementById('appPage').classList.add('hidden');
+                document.getElementById('loginPage').classList.remove('hidden');
+                showToast('Berhasil Keluar', 'Anda telah keluar dari sesi administrator.', 'success');
+
+                // Kirim Notifikasi WhatsApp Logout
+                await sendWhatsAppNotification("🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAdmin telah *KELUAR (LOGOUT)* dari Sistem Manajemen Limbah pada " + new Date().toLocaleString('id-ID'));
+            });
+        };
+
+        window.showApp = function() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('appPage').classList.remove('hidden');
+            loadAllDataFromFirebase();
+        };
+
+        window.switchTab = function(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-emerald-600', 'text-white', 'shadow-md');
+                el.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-100');
+            });
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tabBtn-${tabName}`);
+            activeBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-100');
+            activeBtn.classList.add('bg-emerald-600', 'text-white', 'shadow-md');
+            if(tabName === 'saldo') loadSaldoData();
+        };
+
+        window.calculateTotal = function(type) {
+            if (type === 'penjualan' || type === 'pembelian') {
+                const qty = parseFloat(document.getElementById(`qty_${type}`).value) || 0;
+                const harga = parseFloat(document.getElementById(`harga_${type}`).value) || 0;
+                document.getElementById(`jumlah_${type}`).value = formatRupiah(qty * harga);
+            } else if (type === 'pembagian') {
+                const jumlahUang = parseFloat(document.getElementById('jumlah_uang_pembagian').value) || 0;
+                document.getElementById('jumlah_pembagian').value = formatRupiah(jumlahUang);
+            }
+        };
+
+        function formatRupiah(angka) {
+            return 'Rp ' + angka.toLocaleString('id-ID');
+        }
+
+        window.previewLocalImages = function(event, previewId) {
+            const container = document.getElementById(previewId);
+            container.innerHTML = '';
+            const files = event.target.files;
+            if (!files) return;
+            for (let i = 0; i < files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = "w-12 h-12 object-cover rounded-lg border shadow-sm";
+                    container.appendChild(img);
+                };
+                reader.readAsDataURL(files[i]);
+            }
+        };
+
+        window.saveData = async function(e, type) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            let rawJumlah = 0;
+            let identifierName = "";
+            if (type === 'penjualan' || type === 'pembelian') {
+                rawJumlah = (parseFloat(formData.get('banyaknya')) || 0) * (parseFloat(formData.get('harga')) || 0);
+                identifierName = formData.get('namaBarang');
+            } else {
+                rawJumlah = parseFloat(formData.get('jumlahUang')) || 0;
+                identifierName = formData.get('namaTim');
+            }
+
+            const tanggal = formData.get('tanggal');
+            const customFileName = `${identifierName}_${tanggal}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+            const mediaFiles = form.querySelector('input[type="file"]').files;
+            if (!mediaFiles || mediaFiles.length === 0) {
+                showToast('Peringatan', 'Wajib memilih minimal 1 foto dokumentasi!', 'error');
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Mengirim Data Ke Sistem';
+
+            try {
+                let imagePromises = Array.from(mediaFiles).map(file => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve({ name: file.name, type: file.type, base64: e.target.result });
+                        reader.onerror = error => reject(error);
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+                let base64Images = await Promise.all(imagePromises);
+
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'upload', images: base64Images, customName: customFileName })
+                });
+                
+                const result = await response.json();
+                if (result.status !== 'success') throw new Error(result.message);
+
+                let item = {
+                    tanggal: tanggal,
+                    namaBarang: formData.get('namaBarang') || null,
+                    berat: formData.get('berat') || '-',
+                    banyaknya: formData.get('banyaknya') ? parseFloat(formData.get('banyaknya')) : null,
+                    harga: formData.get('harga') ? parseFloat(formData.get('harga')) : null,
+                    namaTim: formData.get('namaTim') || null,
+                    jumlahUang: formData.get('jumlahUang') ? parseFloat(formData.get('jumlahUang')) : null,
+                    rawJumlah: rawJumlah,
+                    driveUrls: result.urls,
+                    driveFileIds: result.fileIds || [],
+                    createdAt: new Date().toISOString()
+                };
+
+                await addDoc(collection(db, type), item);
+                form.reset();
+                document.getElementById(`jumlah_${type}`).value = '';
+                document.getElementById(`preview_${type}`).innerHTML = '';
+                await loadAllDataFromFirebase();
+                showToast('Berhasil Menyimpan', 'Data berhasil disimpan!', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal Menyimpan', 'Terjadi kesalahan saat menyimpan data.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-2"></i>Simpan`;
+            }
+        };
+
+        window.loadAllDataFromFirebase = async function() {
+            for (const type of ['penjualan', 'pembelian', 'pembagian']) {
+                const querySnapshot = await getDocs(collection(db, type));
+                let list = [];
+                querySnapshot.forEach((docSnap) => list.push({ id: docSnap.id, ...docSnap.data() }));
+                window.appData[type] = list;
+                loadTableData(type);
+            }
+            loadSaldoData();
+        };
+
+        window.loadTableData = function(type) {
+            const container = document.getElementById(`tableContainer_${type}`);
+            let data = window.appData[type];
+            if (data.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">Belum ada data tersedia.</div>`;
+                return;
+            }
+            data.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            let html = `<table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
+                        <th class="p-3">Tanggal</th>
+                        ${type !== 'pembagian' ? '<th class="p-3">Nama Barang</th><th class="p-3">Berat</th><th class="p-3">Qty</th><th class="p-3">Harga</th>' : '<th class="p-3">Nama Tim</th><th class="p-3">Jumlah Uang</th>'}
+                        <th class="p-3">Total</th>
+                        <th class="p-3 text-center">Foto Dokumentasi</th>
+                        <th class="p-3 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">`;
+
+            data.forEach(item => {
+                html += `<tr class="hover:bg-gray-50">
+                    <td class="p-3 font-medium">${item.tanggal}</td>`;
+                if (type !== 'pembagian') {
+                    html += `<td class="p-3">${item.namaBarang}</td>
+                             <td class="p-3 text-gray-500">${item.berat}</td>
+                             <td class="p-3">${item.banyaknya}</td>
+                             <td class="p-3">${formatRupiah(parseFloat(item.harga))}</td>`;
+                } else {
+                    html += `<td class="p-3">${item.namaTim}</td>
+                             <td class="p-3">${formatRupiah(parseFloat(item.jumlahUang))}</td>`;
+                }
+                html += `<td class="p-3 font-bold text-emerald-700">${formatRupiah(item.rawJumlah)}</td>`;
+                
+                html += `<td class="p-3 text-center"><div class="flex justify-center gap-1.5 flex-wrap">`;
+                if (item.driveUrls && item.driveUrls.length > 0) {
+                    item.driveUrls.forEach((url) => {
+                        html += `<img src="${url}" onclick="openMediaModal('${url}')" class="w-10 h-10 object-cover rounded-lg border shadow-sm cursor-pointer hover:opacity-80 transition" title="Klik untuk memperbesar / unduh">`;
+                    });
+                } else {
+                    html += `-`;
+                }
+                html += `</div></td>`;
+
+                html += `<td class="p-3 text-center">
+                            <button onclick="confirmDeleteItem('${type}', '${item.id}')" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50" title="Hapus Data & Foto di Drive"><i class="fa-solid fa-trash-can"></i></button>
+                         </td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        };
+
+        window.loadSaldoData = function() {
+            let totalPemasukan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            let totalPengeluaran = window.appData.pembelian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0) + 
+                                   window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            document.getElementById('saldoTotalDisplay').innerText = formatRupiah(totalPemasukan - totalPengeluaran);
+            document.getElementById('saldoPemasukanDisplay').innerText = formatRupiah(totalPemasukan);
+            document.getElementById('saldoPengeluaranDisplay').innerText = formatRupiah(totalPengeluaran);
+        };
+
+        window.confirmDeleteItem = function(type, id) {
+            showCustomConfirm(
+                'Hapus Data & Foto', 
+                'Apakah Anda yakin ingin menghapus data ini? Foto terkait di Google Drive juga akan dihapus secara permanen.', 
+                async function() {
+                    try {
+                        showToast('Memproses', 'Menghapus data dan file terkait di Drive...', 'info');
+                        
+                        const itemData = window.appData[type].find(el => el.id === id);
+                        
+                        if (itemData && itemData.driveFileIds && itemData.driveFileIds.length > 0) {
+                            await fetch(APPS_SCRIPT_URL, {
+                                method: 'POST',
+                                body: JSON.stringify({ action: 'delete', fileIds: itemData.driveFileIds })
+                            });
+                        }
+
+                        await deleteDoc(doc(db, type, id));
+                        await loadAllDataFromFirebase();
+                        showToast('Berhasil Dihapus', 'Data dan foto terkait di Google Drive berhasil dihapus.', 'success');
+                    } catch (err) {
+                        console.error(err);
+                        showToast('Gagal Menghapus', 'Terjadi kesalahan saat menghapus data.', 'error');
+                    }
+                }
+            );
+        };
+
+        window.openMediaModal = function(url) {
+            document.getElementById('modalImageElement').src = url;
+            document.getElementById('downloadImageBtn').href = url;
+            document.getElementById('mediaModal').classList.remove('hidden');
+        };
+
+        window.closeMediaModal = function() {
+            document.getElementById('mediaModal').classList.add('hidden');
+        };
+    </script>
 </body>
 </html>
