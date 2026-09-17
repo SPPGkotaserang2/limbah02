@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- html2canvas untuk Unduh Nota PNG -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- jsPDF untuk Unduh Nota PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- SheetJS / xlsx untuk Unduh Nota Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -41,6 +45,75 @@
                 <button id="confirmCancelBtn" onclick="closeConfirmModal()" class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition-all">Batal</button>
                 <button id="confirmOkBtn" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-xs transition-all shadow-md shadow-red-600/30">Ya, Lanjutkan</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT DATA -->
+    <div id="editModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 transform transition-all my-8">
+            <div class="flex justify-between items-center mb-6 border-b pb-3">
+                <h3 class="text-base font-bold text-gray-900 flex items-center">
+                    <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-pen-to-square"></i></span>
+                    Edit Data Transaksi
+                </h3>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form id="editForm" onsubmit="handleUpdateData(event)" class="space-y-4">
+                <input type="hidden" id="edit_type">
+                <input type="hidden" id="edit_id">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Tanggal</label>
+                    <input type="date" id="edit_tanggal" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div id="edit_field_barang">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nama Barang</label>
+                    <input type="text" id="edit_namaBarang" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div id="edit_field_berat">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Berat / Satuan</label>
+                    <input type="text" id="edit_berat" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div id="edit_field_banyaknya">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Banyaknya</label>
+                    <input type="number" step="any" id="edit_banyaknya" oninput="calculateEditTotal()" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div id="edit_field_harga">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Harga Satuan (Rp)</label>
+                    <input type="number" step="any" id="edit_harga" oninput="calculateEditTotal()" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div id="edit_field_tim" class="hidden">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nama Tim / Orang</label>
+                    <input type="text" id="edit_namaTim" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div id="edit_field_orang" class="hidden">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Jumlah Orang</label>
+                    <input type="number" id="edit_jumlahOrang" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div id="edit_field_uang" class="hidden">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Jumlah Uang (Rp)</label>
+                    <input type="number" step="any" id="edit_jumlahUang" oninput="calculateEditTotal()" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Jumlah Total</label>
+                    <input type="text" id="edit_jumlah_display" readonly class="w-full px-4 py-2.5 bg-amber-50 font-bold text-amber-700 border border-amber-200 rounded-xl text-sm">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition-all">Batal</button>
+                    <button type="submit" id="editSubmitBtn" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs transition-all shadow-md shadow-amber-600/30">
+                        <i class="fa-solid fa-floppy-disk mr-1.5"></i>Simpan Perubahan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -88,7 +161,7 @@
                     <span class="font-bold text-lg text-gray-900">Sistem Data Limbah</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <span class="text-xs font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200">
+                    <span id="userRoleBadge" class="text-xs font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200">
                         <i class="fa-solid fa-shield-halved mr-1"></i> Admin
                     </span>
                     <button onclick="handleLogout()" class="text-gray-500 hover:text-red-600 text-sm font-medium">
@@ -148,8 +221,11 @@
                             <input type="text" name="jumlah" id="jumlah_penjualan" readonly placeholder="Rp 0" class="w-full px-4 py-2.5 bg-emerald-50 font-bold text-emerald-700 border border-emerald-200 rounded-xl text-sm">
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
-                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_penjualan')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Foto Dokumentasi (Wajib) <span class="text-red-500">*</span></label>
+                                <button type="button" onclick="clearSelectedImages('penjualan')" class="text-xs text-red-500 hover:text-red-700 font-semibold hidden" id="clearBtn_penjualan"><i class="fa-solid fa-xmark mr-1"></i>Batal Foto</button>
+                            </div>
+                            <input type="file" id="input_file_penjualan" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_penjualan', 'penjualan')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_penjualan" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
                         <div class="md:col-span-2 lg:col-span-3 flex justify-end">
@@ -168,7 +244,7 @@
                             <span class="text-xs text-gray-500 font-medium">s/d:</span>
                             <input type="date" id="end_penjualan" onchange="loadTableData('penjualan')" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs">
                             <button onclick="resetFilter('penjualan')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition">Hari Ini</button>
-                            <button onclick="openNotaPreviewModal('penjualan')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
+                            <button id="btnNota_penjualan" onclick="openNotaPreviewModal('penjualan')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
                         </div>
                     </div>
                     <div id="tableContainer_penjualan" class="overflow-x-auto"></div>
@@ -208,8 +284,11 @@
                             <input type="text" name="jumlah" id="jumlah_pembelian" readonly placeholder="Rp 0" class="w-full px-4 py-2.5 bg-emerald-50 font-bold text-emerald-700 border border-emerald-200 rounded-xl text-sm">
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
-                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembelian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Foto Dokumentasi (Wajib) <span class="text-red-500">*</span></label>
+                                <button type="button" onclick="clearSelectedImages('pembelian')" class="text-xs text-red-500 hover:text-red-700 font-semibold hidden" id="clearBtn_pembelian"><i class="fa-solid fa-xmark mr-1"></i>Batal Foto</button>
+                            </div>
+                            <input type="file" id="input_file_pembelian" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembelian', 'pembelian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_pembelian" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
                         <div class="md:col-span-2 lg:col-span-3 flex justify-end">
@@ -228,7 +307,7 @@
                             <span class="text-xs text-gray-500 font-medium">s/d:</span>
                             <input type="date" id="end_pembelian" onchange="loadTableData('pembelian')" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs">
                             <button onclick="resetFilter('pembelian')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition">Hari Ini</button>
-                            <button onclick="openNotaPreviewModal('pembelian')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
+                            <button id="btnNota_pembelian" onclick="openNotaPreviewModal('pembelian')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
                         </div>
                     </div>
                     <div id="tableContainer_pembelian" class="overflow-x-auto"></div>
@@ -264,8 +343,11 @@
                             <input type="text" name="jumlah" id="jumlah_pembagian" readonly placeholder="Rp 0" class="w-full px-4 py-2.5 bg-emerald-50 font-bold text-emerald-700 border border-emerald-200 rounded-xl text-sm">
                         </div>
                         <div class="md:col-span-2 lg:col-span-3">
-                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Foto Dokumentasi (Bisa pilih lebih dari 1) <span class="text-red-500">*</span></label>
-                            <input type="file" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembagian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">Foto Dokumentasi (Wajib) <span class="text-red-500">*</span></label>
+                                <button type="button" onclick="clearSelectedImages('pembagian')" class="text-xs text-red-500 hover:text-red-700 font-semibold hidden" id="clearBtn_pembagian"><i class="fa-solid fa-xmark mr-1"></i>Batal Foto</button>
+                            </div>
+                            <input type="file" id="input_file_pembagian" name="media" required multiple accept="image/*" onchange="previewLocalImages(event, 'preview_pembagian', 'pembagian')" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700">
                             <div id="preview_pembagian" class="flex flex-wrap gap-2 mt-3"></div>
                         </div>
                         <div class="md:col-span-2 lg:col-span-3 flex justify-end">
@@ -284,7 +366,7 @@
                             <span class="text-xs text-gray-500 font-medium">s/d:</span>
                             <input type="date" id="end_pembagian" onchange="loadTableData('pembagian')" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs">
                             <button onclick="resetFilter('pembagian')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition">Hari Ini</button>
-                            <button onclick="openNotaPreviewModal('pembagian')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
+                            <button id="btnNota_pembagian" onclick="openNotaPreviewModal('pembagian')" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1.5"></i> Unduh Nota Per Hari</button>
                         </div>
                     </div>
                     <div id="tableContainer_pembagian" class="overflow-x-auto"></div>
@@ -343,7 +425,7 @@
         </div>
     </div>
 
-    <!-- MODAL PRATINJAU NOTA HARIAN -->
+    <!-- MODAL PRATINJAU NOTA HARIAN TERMASUK PILIHAN FORMAT -->
     <div id="notaPreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
@@ -355,12 +437,19 @@
                     <!-- Konten Nota yang ditampilkan secara visual -->
                 </div>
             </div>
-            <div class="p-4 bg-gray-50 border-t flex justify-between items-center">
-                <p class="text-xs text-gray-500">Tekan tombol di samping untuk mengunduh.</p>
-                <div class="flex space-x-3">
+            <div class="p-4 bg-gray-50 border-t flex flex-col space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-semibold text-gray-600">Pilih Format File:</label>
+                    <select id="downloadFormatSelect" class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-500">
+                        <option value="png">PNG (Gambar)</option>
+                        <option value="pdf">PDF (Dokumen)</option>
+                        <option value="excel">Excel (.xlsx)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
                     <button onclick="closeNotaPreviewModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-xl text-xs">Batal</button>
                     <button id="confirmDownloadNotaBtn" onclick="executeDownloadNota()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-xs shadow flex items-center">
-                        <i class="fa-solid fa-download mr-1.5"></i> Langsung Unduh Nota
+                        <i class="fa-solid fa-download mr-1.5"></i> Unduh Nota
                     </button>
                 </div>
             </div>
@@ -401,7 +490,7 @@
     <!-- SCRIPT FIREBASE & APLIKASI -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB-4SHVseJrabUxIOCjup1KuNmxq22TJK4",
@@ -442,6 +531,7 @@
             return dateString;
         }
 
+        // FUNGSI NOTIFIKASI WHATSAPP
         async function sendWhatsAppNotification(message) {
             try {
                 const bodyData = new URLSearchParams();
@@ -532,6 +622,7 @@
             } else {
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('loginTime');
+                localStorage.removeItem('userRole');
             }
         };
 
@@ -545,16 +636,26 @@
 
         window.handleLogin = async function(e) {
             e.preventDefault();
-            const user = document.getElementById('usernameInput').value;
-            const pass = document.getElementById('passwordInput').value;
-            if (user === 'Admin' && pass === 'Limbah02') {
+            const user = document.getElementById('usernameInput').value.trim();
+            const pass = document.getElementById('passwordInput').value.trim();
+
+            let role = '';
+            if (user === 'Serang' && pass === 'Mandiri02srg') {
+                role = 'admin';
+            } else if (user === 'Jimi' && pass === 'User123') {
+                role = 'user';
+            }
+
+            if (role !== '') {
                 localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('userRole', role);
                 localStorage.setItem('loginTime', new Date().getTime().toString());
                 
-                showToast('Login Berhasil', 'Selamat datang kembali di Sistem Data Limbah', 'success');
+                showToast('Login Berhasil', `Selamat datang kembali (${role.toUpperCase()})`, 'success');
                 showApp();
 
-                await sendWhatsAppNotification("🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAdmin berhasil *MASUK (LOGIN)* ke dalam Sistem Manajemen Limbah pada " + new Date().toLocaleString('id-ID'));
+                // NOTIFIKASI WA LOGIN
+                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${user} (${role.toUpperCase()})* berhasil *MASUK (LOGIN)* ke dalam Sistem Manajemen Limbah pada ${new Date().toLocaleString('id-ID')}`);
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
                 showToast('Gagal Masuk', 'Username atau sandi yang Anda masukkan salah.', 'error');
@@ -563,17 +664,40 @@
 
         window.handleLogout = function() {
             showCustomConfirm('Konfirmasi Keluar', 'Apakah Anda yakin ingin keluar dari sistem?', async function() {
+                const currentUser = localStorage.getItem('userRole') || 'User';
                 localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userRole');
                 localStorage.removeItem('loginTime');
                 document.getElementById('appPage').classList.add('hidden');
                 document.getElementById('loginPage').classList.remove('hidden');
-                showToast('Berhasil Keluar', 'Anda telah keluar dari sesi administrator.', 'success');
+                showToast('Berhasil Keluar', 'Anda telah keluar dari sesi aplikasi.', 'success');
 
-                await sendWhatsAppNotification("🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAdmin telah *KELUAR (LOGOUT)* dari Sistem Manajemen Limbah pada " + new Date().toLocaleString('id-ID'));
+                // NOTIFIKASI WA LOGOUT
+                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${currentUser.toUpperCase()}* telah *KELUAR (LOGOUT)* dari Sistem Manajemen Limbah pada ${new Date().toLocaleString('id-ID')}`);
             });
         };
 
         window.showApp = function() {
+            const role = localStorage.getItem('userRole') || 'user';
+            const roleBadge = document.getElementById('userRoleBadge');
+            
+            if (role === 'admin') {
+                roleBadge.innerHTML = '<i class="fa-solid fa-shield-halved mr-1"></i> Admin';
+                roleBadge.className = "text-xs font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200";
+            } else {
+                roleBadge.innerHTML = '<i class="fa-solid fa-user mr-1"></i> Jimi Kurniawan';
+                roleBadge.className = "text-xs font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200";
+            }
+
+            // Sembunyikan tombol unduh nota jika role User
+            ['penjualan', 'pembelian', 'pembagian'].forEach(tab => {
+                const btnNota = document.getElementById(`btnNota_${tab}`);
+                if (btnNota) {
+                    if (role === 'user') btnNota.classList.add('hidden');
+                    else btnNota.classList.remove('hidden');
+                }
+            });
+
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('appPage').classList.remove('hidden');
             loadAllDataFromFirebase();
@@ -634,11 +758,17 @@
             });
         }
 
-        window.previewLocalImages = function(event, previewId) {
+        window.previewLocalImages = function(event, previewId, type) {
             const container = document.getElementById(previewId);
+            const clearBtn = document.getElementById(`clearBtn_${type}`);
             container.innerHTML = '';
             const files = event.target.files;
-            if (!files) return;
+            if (!files || files.length === 0) {
+                if(clearBtn) clearBtn.classList.add('hidden');
+                return;
+            }
+            if(clearBtn) clearBtn.classList.remove('hidden');
+
             for (let i = 0; i < files.length; i++) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -651,6 +781,15 @@
             }
         };
 
+        window.clearSelectedImages = function(type) {
+            const inputEl = document.getElementById(`input_file_${type}`);
+            if(inputEl) inputEl.value = "";
+            document.getElementById(`preview_${type}`).innerHTML = "";
+            const clearBtn = document.getElementById(`clearBtn_${type}`);
+            if(clearBtn) clearBtn.classList.add('hidden');
+        };
+
+        // INPUT DATA BARU & NOTIFIKASI WA
         window.saveData = async function(e, type) {
             e.preventDefault();
             const form = e.target;
@@ -670,16 +809,20 @@
             const customFileName = `${identifierName}_${tanggal}`.replace(/[^a-zA-Z0-9_-]/g, '_');
 
             const mediaFiles = form.querySelector('input[type="file"]').files;
+            const submitBtn = form.querySelector('button[type="submit"]');
+
             if (!mediaFiles || mediaFiles.length === 0) {
-                showToast('Peringatan', 'Wajib memilih minimal 1 foto dokumentasi!', 'error');
+                showToast('Perhatian', 'Foto dokumentasi wajib diunggah!', 'error');
                 return;
             }
 
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Mengompres & Mengirim Foto...';
+            let uploadedUrls = [];
+            let uploadedFileIds = [];
 
             try {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Mengompres & Mengirim Foto...';
+
                 let imagePromises = Array.from(mediaFiles).map(async file => {
                     let compressedBase64 = await compressImage(file);
                     return { name: file.name, type: 'image/jpeg', base64: compressedBase64 };
@@ -695,6 +838,8 @@
                 
                 const result = await response.json();
                 if (result.status !== 'success') throw new Error(result.message);
+                uploadedUrls = result.urls || [];
+                uploadedFileIds = result.fileIds || [];
 
                 let item = {
                     tanggal: tanggal,
@@ -706,20 +851,32 @@
                     jumlahOrang: formData.get('jumlahOrang') ? parseInt(formData.get('jumlahOrang')) : null,
                     jumlahUang: formData.get('jumlahUang') ? parseFloat(formData.get('jumlahUang')) : null,
                     rawJumlah: rawJumlah,
-                    driveUrls: result.urls,
-                    driveFileIds: result.fileIds || [],
+                    driveUrls: uploadedUrls,
+                    driveFileIds: uploadedFileIds,
                     createdAt: new Date().toISOString()
                 };
 
                 await addDoc(collection(db, type), item);
                 form.reset();
+                clearSelectedImages(type);
                 document.getElementById(`jumlah_${type}`).value = '';
-                document.getElementById(`preview_${type}`).innerHTML = '';
                 await loadAllDataFromFirebase();
-                showToast('Berhasil Menyimpan', 'Data & foto berhasil disimpan!', 'success');
+                showToast('Berhasil Menyimpan', 'Data berhasil disimpan!', 'success');
+
+                // NOTIFIKASI WA INPUT BARANG
+                const role = localStorage.getItem('userRole') || 'User';
+                let waText = `📝 *INPUT DATA BARU (${type.toUpperCase()})*\n` +
+                             `Oleh: Akun ${role.toUpperCase()}\n\n` +
+                             `• Tanggal: ${formatDateID(tanggal)}\n` +
+                             (type !== 'pembagian' ? `• Nama Barang: ${identifierName}\n• Berat/Satuan: ${formData.get('berat') || '-'}\n• Banyaknya: ${formData.get('banyaknya')}\n• Harga: ${formatRupiah(parseFloat(formData.get('harga')))}\n` : `• Nama Tim: ${identifierName}\n• Jumlah Orang: ${formData.get('jumlahOrang')} Orang\n`) +
+                             `• Total: ${formatRupiah(rawJumlah)}\n\n` +
+                             `Diinput pada: ${new Date().toLocaleString('id-ID')}`;
+                
+                await sendWhatsAppNotification(waText);
+
             } catch (err) {
                 console.error(err);
-                showToast('Gagal Menyimpan', 'Terjadi kesalahan saat mengunggah foto / menyimpan data.', 'error');
+                showToast('Gagal Menyimpan', 'Terjadi kesalahan saat menyimpan data.', 'error');
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-2"></i>Simpan`;
@@ -740,6 +897,7 @@
         window.loadTableData = function(type) {
             const container = document.getElementById(`tableContainer_${type}`);
             let data = window.appData[type];
+            const role = localStorage.getItem('userRole') || 'user';
             
             const startDate = document.getElementById(`start_${type}`).value;
             const endDate = document.getElementById(`end_${type}`).value;
@@ -761,7 +919,7 @@
                         ${type !== 'pembagian' ? '<th class="p-3">Nama Barang</th><th class="p-3">Berat/Satuan</th><th class="p-3">Qty</th><th class="p-3">Harga</th>' : '<th class="p-3">Nama Tim</th><th class="p-3">Jumlah Orang</th><th class="p-3">Jumlah Uang</th>'}
                         <th class="p-3">Total</th>
                         <th class="p-3 text-center">Foto Dokumentasi</th>
-                        <th class="p-3 text-center">Aksi</th>
+                        ${role === 'admin' ? '<th class="p-3 text-center">Aksi</th>' : ''}
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">`;
@@ -791,13 +949,142 @@
                 }
                 html += `</div></td>`;
 
-                html += `<td class="p-3 text-center">
-                            <button onclick="confirmDeleteItem('${type}', '${item.id}')" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50" title="Hapus Data & Foto"><i class="fa-solid fa-trash-can"></i></button>
-                         </td>
-                </tr>`;
+                // HANYA ADMIN YANG DAPAT MELIHAT TOMBOL EDIT DAN HAPUS
+                if (role === 'admin') {
+                    html += `<td class="p-3 text-center">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <button onclick="openEditModal('${type}', '${item.id}')" class="text-amber-600 hover:text-amber-800 p-1.5 rounded-lg hover:bg-amber-50" title="Edit Data"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button onclick="confirmAdminDelete('${type}', '${item.id}')" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50" title="Hapus Data & Foto"><i class="fa-solid fa-trash-can"></i></button>
+                                </div>
+                             </td>`;
+                }
+
+                html += `</tr>`;
             });
             html += `</tbody></table>`;
             container.innerHTML = html;
+        };
+
+        // OPEN & HANDLE EDIT MODAL (KHUSUS ADMIN)
+        window.openEditModal = function(type, id) {
+            const role = localStorage.getItem('userRole');
+            if (role !== 'admin') {
+                showToast('Akses Ditolak', 'User biasa tidak dapat mengubah data.', 'error');
+                return;
+            }
+
+            const item = window.appData[type].find(el => el.id === id);
+            if (!item) return;
+
+            document.getElementById('edit_type').value = type;
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_tanggal').value = item.tanggal;
+
+            if (type === 'pembagian') {
+                document.getElementById('edit_field_barang').classList.add('hidden');
+                document.getElementById('edit_field_berat').classList.add('hidden');
+                document.getElementById('edit_field_banyaknya').classList.add('hidden');
+                document.getElementById('edit_field_harga').classList.add('hidden');
+
+                document.getElementById('edit_field_tim').classList.remove('hidden');
+                document.getElementById('edit_field_orang').classList.remove('hidden');
+                document.getElementById('edit_field_uang').classList.remove('hidden');
+
+                document.getElementById('edit_namaTim').value = item.namaTim || '';
+                document.getElementById('edit_jumlahOrang').value = item.jumlahOrang || '';
+                document.getElementById('edit_jumlahUang').value = item.jumlahUang || '';
+            } else {
+                document.getElementById('edit_field_barang').classList.remove('hidden');
+                document.getElementById('edit_field_berat').classList.remove('hidden');
+                document.getElementById('edit_field_banyaknya').classList.remove('hidden');
+                document.getElementById('edit_field_harga').classList.remove('hidden');
+
+                document.getElementById('edit_field_tim').classList.add('hidden');
+                document.getElementById('edit_field_orang').classList.add('hidden');
+                document.getElementById('edit_field_uang').classList.add('hidden');
+
+                document.getElementById('edit_namaBarang').value = item.namaBarang || '';
+                document.getElementById('edit_berat').value = item.berat || '';
+                document.getElementById('edit_banyaknya').value = item.banyaknya || '';
+                document.getElementById('edit_harga').value = item.harga || '';
+            }
+
+            calculateEditTotal();
+            document.getElementById('editModal').classList.remove('hidden');
+        };
+
+        window.closeEditModal = function() {
+            document.getElementById('editModal').classList.add('hidden');
+        };
+
+        window.calculateEditTotal = function() {
+            const type = document.getElementById('edit_type').value;
+            let total = 0;
+            if (type === 'pembagian') {
+                total = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
+            } else {
+                const qty = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
+                const harga = parseFloat(document.getElementById('edit_harga').value) || 0;
+                total = qty * harga;
+            }
+            document.getElementById('edit_jumlah_display').value = formatRupiah(total);
+        };
+
+        window.handleUpdateData = async function(e) {
+            e.preventDefault();
+            const type = document.getElementById('edit_type').value;
+            const id = document.getElementById('edit_id').value;
+            const submitBtn = document.getElementById('editSubmitBtn');
+
+            let updatedFields = {
+                tanggal: document.getElementById('edit_tanggal').value
+            };
+
+            let rawJumlah = 0;
+            let identifier = '';
+
+            if (type === 'pembagian') {
+                updatedFields.namaTim = document.getElementById('edit_namaTim').value;
+                updatedFields.jumlahOrang = parseInt(document.getElementById('edit_jumlahOrang').value) || 0;
+                updatedFields.jumlahUang = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
+                rawJumlah = updatedFields.jumlahUang;
+                identifier = updatedFields.namaTim;
+            } else {
+                updatedFields.namaBarang = document.getElementById('edit_namaBarang').value;
+                updatedFields.berat = document.getElementById('edit_berat').value;
+                updatedFields.banyaknya = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
+                updatedFields.harga = parseFloat(document.getElementById('edit_harga').value) || 0;
+                rawJumlah = updatedFields.banyaknya * updatedFields.harga;
+                identifier = updatedFields.namaBarang;
+            }
+            updatedFields.rawJumlah = rawJumlah;
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Memperbarui...';
+
+                await updateDoc(doc(db, type, id), updatedFields);
+                closeEditModal();
+                await loadAllDataFromFirebase();
+                showToast('Berhasil Diubah', 'Data transaksi berhasil diperbarui.', 'success');
+
+                // NOTIFIKASI WA EDIT DATA
+                let waText = `✏️ *PERUBAHAN DATA (${type.toUpperCase()})*\n` +
+                             `Oleh: Admin (Serang)\n\n` +
+                             `• Tanggal: ${formatDateID(updatedFields.tanggal)}\n` +
+                             (type !== 'pembagian' ? `• Nama Barang: ${identifier}\n• Banyaknya: ${updatedFields.banyaknya}\n• Harga: ${formatRupiah(updatedFields.harga)}\n` : `• Nama Tim: ${identifier}\n• Jumlah Orang: ${updatedFields.jumlahOrang} Orang\n`) +
+                             `• Total Baru: ${formatRupiah(rawJumlah)}\n\n` +
+                             `Diubah pada: ${new Date().toLocaleString('id-ID')}`;
+
+                await sendWhatsAppNotification(waText);
+
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal Mengubah', 'Terjadi kesalahan saat memperbarui data.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1.5"></i>Simpan Perubahan`;
+            }
         };
 
         window.loadSaldoData = function() {
@@ -861,6 +1148,12 @@
         };
 
         window.openNotaPreviewModal = function(type) {
+            const role = localStorage.getItem('userRole');
+            if (role !== 'admin') {
+                showToast('Akses Ditolak', 'User biasa tidak dapat mengunduh nota.', 'error');
+                return;
+            }
+
             const startDate = document.getElementById(`start_${type}`).value;
             const endDate = document.getElementById(`end_${type}`).value;
 
@@ -930,13 +1223,20 @@
             document.getElementById('notaPreviewModal').classList.add('hidden');
         };
 
-        // Fungsi Unduh Nota Stabil dengan Kloning Independen
         window.executeDownloadNota = function() {
             const { type, startDate } = window.currentNotaDownloadInfo;
+            const selectedFormat = document.getElementById('downloadFormatSelect').value;
+            const data = window.appData[type].filter(item => item.tanggal === startDate);
+
+            if (selectedFormat === 'excel') {
+                closeNotaPreviewModal();
+                exportNotaToExcel(type, startDate, data);
+                return;
+            }
+
             const notaBoxOriginal = document.getElementById('notaBox');
-            
             if (!notaBoxOriginal) {
-                showToast('Gagal', 'Data nota tidak ditemukan untuk diunduh.', 'error');
+                showToast('Gagal', 'Data nota tidak ditemukan.', 'error');
                 closeNotaPreviewModal();
                 return;
             }
@@ -958,25 +1258,71 @@
                     logging: false,
                     backgroundColor: '#ffffff' 
                 }).then(canvas => {
-                    const imageURL = canvas.toDataURL('image/png');
-                    
-                    const link = document.createElement('a');
-                    link.href = imageURL;
-                    link.download = `Nota_Rekap_${type}_${startDate}.png`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+                    const imgData = canvas.toDataURL('image/png');
+
+                    if (selectedFormat === 'png') {
+                        const link = document.createElement('a');
+                        link.href = imgData;
+                        link.download = `Nota_Rekap_${type}_${startDate}.png`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        showToast('Berhasil', 'Nota PNG berhasil diunduh.', 'success');
+                    } else if (selectedFormat === 'pdf') {
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const imgWidth = 190;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                        pdf.save(`Nota_Rekap_${type}_${startDate}.pdf`);
+                        showToast('Berhasil', 'Nota PDF berhasil diunduh.', 'success');
+                    }
                     
                     if (document.body.contains(cloneBox)) document.body.removeChild(cloneBox);
-                    
-                    showToast('Berhasil', 'Nota harian berhasil diunduh.', 'success');
                 }).catch(err => {
                     console.error(err);
                     if (document.body.contains(cloneBox)) document.body.removeChild(cloneBox);
-                    showToast('Gagal', 'Gagal mengunduh nota rekap.', 'error');
+                    showToast('Gagal', 'Gagal mengunduh nota.', 'error');
                 });
             }, 100);
         };
+
+        function exportNotaToExcel(type, startDate, data) {
+            let excelData = [];
+            let total = 0;
+
+            if (type === 'pembagian') {
+                excelData = data.map(item => {
+                    total += (item.rawJumlah || 0);
+                    return {
+                        "Tanggal": formatDateID(item.tanggal),
+                        "Nama Tim": item.namaTim || '-',
+                        "Jumlah Orang": (item.jumlahOrang || 0) + " Orang",
+                        "Jumlah Uang": item.rawJumlah || 0
+                    };
+                });
+                excelData.push({ "Tanggal": "", "Nama Tim": "TOTAL", "Jumlah Orang": "", "Jumlah Uang": total });
+            } else {
+                excelData = data.map(item => {
+                    total += (item.rawJumlah || 0);
+                    return {
+                        "Tanggal": formatDateID(item.tanggal),
+                        "Nama Barang": item.namaBarang || '-',
+                        "Berat/Satuan": item.berat || '-',
+                        "Banyaknya": item.banyaknya || 0,
+                        "Harga Satuan": item.harga || 0,
+                        "Jumlah Total": item.rawJumlah || 0
+                    };
+                });
+                excelData.push({ "Tanggal": "", "Nama Barang": "TOTAL", "Berat/Satuan": "", "Banyaknya": "", "Harga Satuan": "", "Jumlah Total": total });
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, `Nota ${type}`);
+            XLSX.writeFile(workbook, `Nota_Rekap_${type}_${startDate}.xlsx`);
+            showToast('Berhasil', 'Nota Excel berhasil diunduh.', 'success');
+        }
 
         window.downloadCurrentMediaImage = async function() {
             if (!window.currentMediaUrl) return;
@@ -1006,33 +1352,53 @@
             }
         };
 
-        window.confirmDeleteItem = function(type, id) {
-            showCustomConfirm(
-                'Hapus Data & Foto', 
-                'Apakah Anda yakin ingin menghapus data ini? Foto terkait di Sistem juga akan dihapus secara permanen.', 
-                async function() {
-                    try {
-                        showToast('Memproses', 'Menghapus data dan file terkait di Sistem...', 'info');
-                        
-                        const itemData = window.appData[type].find(el => el.id === id);
-                        
-                        if (itemData && itemData.driveFileIds && itemData.driveFileIds.length > 0) {
-                            await fetch(APPS_SCRIPT_URL, {
-                                method: 'POST',
-                                body: JSON.stringify({ action: 'delete', fileIds: itemData.driveFileIds })
-                            });
-                        }
+        // HAPUS LANGSUNG TANPA KODE PIN KHUSUS ADMIN
+        window.confirmAdminDelete = function(type, id) {
+            const role = localStorage.getItem('userRole');
+            if (role !== 'admin') {
+                showToast('Akses Ditolak', 'User biasa tidak memiliki izin untuk menghapus data.', 'error');
+                return;
+            }
 
-                        await deleteDoc(doc(db, type, id));
-                        await loadAllDataFromFirebase();
-                        showToast('Berhasil Dihapus', 'Data dan foto terkait di Sistem berhasil dihapus.', 'success');
-                    } catch (err) {
-                        console.error(err);
-                        showToast('Gagal Menghapus', 'Terjadi kesalahan saat menghapus data.', 'error');
-                    }
-                }
-            );
+            showCustomConfirm('Hapus Data Permanen', 'Apakah Anda yakin ingin menghapus data ini beserta foto dokumentasinya?', function() {
+                executeDeleteItem(type, id);
+            });
         };
+
+        // HAPUS DATA & NOTIFIKASI WA
+        async function executeDeleteItem(type, id) {
+            try {
+                showToast('Memproses', 'Menghapus data dan file terkait di Sistem...', 'info');
+                
+                const itemData = window.appData[type].find(el => el.id === id);
+                
+                if (itemData && itemData.driveFileIds && itemData.driveFileIds.length > 0) {
+                    await fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ action: 'delete', fileIds: itemData.driveFileIds })
+                    });
+                }
+
+                await deleteDoc(doc(db, type, id));
+                await loadAllDataFromFirebase();
+                showToast('Berhasil Dihapus', 'Data dan foto terkait di Sistem berhasil dihapus.', 'success');
+
+                // NOTIFIKASI WA HAPUS DATA
+                let identifier = itemData ? (itemData.namaBarang || itemData.namaTim || '-') : '-';
+                let waText = `🗑️ *PENGHAPUSAN DATA (${type.toUpperCase()})*\n` +
+                             `Oleh: Admin (Serang)\n\n` +
+                             `• Tanggal Data: ${formatDateID(itemData ? itemData.tanggal : '')}\n` +
+                             `• Keterangan: ${identifier}\n` +
+                             `• Total: ${formatRupiah(itemData ? itemData.rawJumlah : 0)}\n\n` +
+                             `Dihapus pada: ${new Date().toLocaleString('id-ID')}`;
+
+                await sendWhatsAppNotification(waText);
+
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal Menghapus', 'Terjadi kesalahan saat menghapus data.', 'error');
+            }
+        }
 
         window.openMediaModal = function(url) {
             window.currentMediaUrl = url;
