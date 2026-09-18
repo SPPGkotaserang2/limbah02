@@ -2,7 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Viewport dinamis yang akan diubah via Javascript sesuai status login -->
+    <meta id="viewportMeta" name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Manajemen Keuangan & Limbah</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.10/tailwindcss.min.js"></script>
@@ -700,7 +701,6 @@
         const WA_TOKEN = 'uJ8CF79nyQaJbPrVGeeE';
         const WA_TARGET_PRIMARY = '6283111399112';
 
-        // Daftar bawaan default jika Firestore belum terisi
         const DEFAULT_WA_LIST = [
             { id: '1', name: 'Nomor Utama 1', number: '6283804346245', active: true },
             { id: '2', name: 'Nomor Utama 2', number: '6287785982118', active: true },
@@ -732,13 +732,28 @@
             return diterimaName || '-';
         }
 
+        // FUNGSI CEK KONEKSI INTERNET (OFFLINE LOCK)
         function checkInternetConnection() {
             const overlay = document.getElementById('offlineOverlay');
-            if (!navigator.onLine) overlay.classList.remove('hidden');
-            else overlay.classList.add('hidden');
+            if (!navigator.onLine) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
         }
         window.addEventListener('online', checkInternetConnection);
         window.addEventListener('offline', checkInternetConnection);
+
+        // PENGATUR VIEWPORT DINAMIS (MOBILE vs DESKTOP)
+        function setViewportMode(mode) {
+            const viewportMeta = document.getElementById('viewportMeta');
+            if (mode === 'mobile') {
+                viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+            } else if (mode === 'desktop') {
+                // Memaksa lebar viewport 1280px agar HP membuka halaman utama dalam mode desktop
+                viewportMeta.setAttribute('content', 'width=1280');
+            }
+        }
 
         function getTodayDateString() {
             const today = new Date();
@@ -763,10 +778,7 @@
                     targets = window.waNumbersList.filter(item => item.active).map(item => item.number);
                 }
 
-                if (targets.length === 0) {
-                    console.log("Pesan WA tidak terkirim: Tidak ada nomor tujuan yang dicentang.");
-                    return;
-                }
+                if (targets.length === 0) return;
 
                 const targetString = targets.join(',');
                 const bodyData = new URLSearchParams();
@@ -858,6 +870,8 @@
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('loginTime');
                 localStorage.removeItem('userRole');
+                // Paksa mode mobile saat berada di halaman login
+                setViewportMode('mobile');
             }
         };
 
@@ -900,6 +914,8 @@
                 localStorage.removeItem('loginTime');
                 document.getElementById('appPage').classList.add('hidden');
                 document.getElementById('loginPage').classList.remove('hidden');
+                // Kembalikan ke mode mobile saat kembali ke halaman login
+                setViewportMode('mobile');
                 showToast('Berhasil Keluar', 'Sesi berakhir.', 'success');
                 await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${currentUser.toUpperCase()}* telah *KELUAR (LOGOUT)* pada ${new Date().toLocaleString('id-ID')}`, [WA_TARGET_PRIMARY]);
             });
@@ -909,6 +925,9 @@
             const role = localStorage.getItem('userRole') || 'user';
             const roleBadge = document.getElementById('userRoleBadge');
             
+            // Paksa mode desktop pas masuk aplikasi utama di HP
+            setViewportMode('desktop');
+
             if (role === 'admin') {
                 roleBadge.innerHTML = '<i class="fa-solid fa-shield-halved mr-1"></i> Admin';
                 roleBadge.className = "text-xs font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200";
@@ -1026,7 +1045,6 @@
             if(clearBtn) clearBtn.classList.add('hidden');
         };
 
-        // KELOLA MODAL TRANSFER / ISI SALDO PEMBELIAN
         window.openModalAddSaldoPembelian = function() {
             document.getElementById('input_nominal_transfer').value = '';
             document.getElementById('modalAddSaldoPembelian').classList.remove('hidden');
@@ -1100,7 +1118,6 @@
             }
         };
 
-        // KELOLA WA NUMBERS DI FIRESTORE
         async function loadWaNumbers() {
             try {
                 const docSnap = await getDoc(doc(db, "settings", "wa_numbers"));
@@ -1222,7 +1239,6 @@
             });
         };
 
-        // INPUT DATA BARU & KIRIM PESAN WA
         window.saveData = async function(e, type) {
             e.preventDefault();
             const form = e.target;
@@ -1447,85 +1463,79 @@
                     html += `<td class="p-3 text-center">
                                 <div class="flex items-center justify-center space-x-2">
                                     <button onclick="openEditModal('${type}', '${item.id}')" class="text-amber-600 hover:text-amber-800 p-1.5 rounded-lg hover:bg-amber-50" title="Edit Data"><i class="fa-solid fa-pen-to-square"></i></button>
-                                    <button onclick="confirmAdminDelete('${type}', '${item.id}')" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50" title="Hapus Data & Foto"><i class="fa-solid fa-trash-can"></i></button>
+                                    <button onclick="deleteData('${type}', '${item.id}')" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50" title="Hapus Data"><i class="fa-solid fa-trash-can"></i></button>
                                 </div>
                              </td>`;
                 }
-
                 html += `</tr>`;
             });
             html += `</tbody></table>`;
             container.innerHTML = html;
         };
 
-        window.confirmAdminDelete = function(type, id) {
-            const role = localStorage.getItem('userRole');
-            if (role !== 'admin') {
-                showToast('Akses Ditolak', 'Hanya admin yang dapat menghapus data.', 'error');
-                return;
-            }
-
-            showCustomConfirm('Konfirmasi Hapus', 'Apakah Anda yakin ingin menghapus data ini? Jika data Pembelian dihapus, saldo khusus pembelian akan dikembalikan.', async function() {
+        window.deleteData = function(type, id) {
+            showCustomConfirm('Hapus Data', 'Apakah Anda yakin ingin menghapus data transaksi ini?', async function() {
                 try {
-                    const targetItem = window.appData[type].find(el => el.id === id);
-                    await deleteDoc(doc(db, type, id));
-
-                    // JIKA DATA PEMBELIAN DIHAPUS, KEMBALIKAN SALDO PEMBELIAN
-                    if (type === 'pembelian' && targetItem && targetItem.rawJumlah) {
-                        window.saldoPembelianKhusus += targetItem.rawJumlah;
-                        await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: window.saldoPembelianKhusus });
+                    const docRef = doc(db, type, id);
+                    if (type === 'pembelian') {
+                        const targetSnap = await getDoc(docRef);
+                        if (targetSnap.exists()) {
+                            const val = targetSnap.data().rawJumlah || 0;
+                            window.saldoPembelianKhusus += val;
+                            await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: window.saldoPembelianKhusus });
+                        }
                     }
-
+                    await deleteDoc(docRef);
                     await loadAllDataFromFirebase();
-                    showToast('Berhasil Dihapus', 'Data transaksi berhasil dihapus.', 'success');
-                } catch (err) {
+                    showToast('Berhasil', 'Data berhasil dihapus.', 'success');
+                } catch(err) {
                     console.error(err);
-                    showToast('Gagal Menghapus', 'Terjadi kesalahan saat menghapus data.', 'error');
+                    showToast('Gagal', 'Terjadi kesalahan saat menghapus data.', 'error');
                 }
             });
         };
 
         window.openEditModal = function(type, id) {
-            const role = localStorage.getItem('userRole');
-            if (role !== 'admin') {
-                showToast('Akses Ditolak', 'User biasa tidak dapat mengubah data.', 'error');
-                return;
-            }
-
-            const item = window.appData[type].find(el => el.id === id);
+            const item = window.appData[type].find(d => d.id === id);
             if (!item) return;
 
             document.getElementById('edit_type').value = type;
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_tanggal').value = item.tanggal;
 
-            if (type === 'pembagian') {
-                document.getElementById('edit_field_barang').classList.add('hidden');
-                document.getElementById('edit_field_berat').classList.add('hidden');
-                document.getElementById('edit_field_banyaknya').classList.add('hidden');
-                document.getElementById('edit_field_harga').classList.add('hidden');
+            const fBarang = document.getElementById('edit_field_barang');
+            const fBerat = document.getElementById('edit_field_berat');
+            const fBanyaknya = document.getElementById('edit_field_banyaknya');
+            const fHarga = document.getElementById('edit_field_harga');
+            const fTim = document.getElementById('edit_field_tim');
+            const fOrang = document.getElementById('edit_field_orang');
+            const fUang = document.getElementById('edit_field_uang');
 
-                document.getElementById('edit_field_tim').classList.remove('hidden');
-                document.getElementById('edit_field_orang').classList.remove('hidden');
-                document.getElementById('edit_field_uang').classList.remove('hidden');
-
-                document.getElementById('edit_namaTim').value = item.namaTim || 'Sopiyan';
-                document.getElementById('edit_jumlahOrang').value = item.jumlahOrang || '';
-                document.getElementById('edit_jumlahUang').value = item.jumlahUang || '';
-            } else {
-                document.getElementById('edit_field_barang').classList.remove('hidden');
-                document.getElementById('edit_field_berat').classList.remove('hidden');
-                document.getElementById('edit_field_banyaknya').classList.remove('hidden');
-                document.getElementById('edit_field_harga').classList.remove('hidden');
-
-                document.getElementById('edit_field_tim').classList.add('hidden');
-                document.getElementById('edit_field_orang').classList.add('hidden');
-                document.getElementById('edit_field_uang').classList.add('hidden');
+            if (type !== 'pembagian') {
+                fBarang.classList.remove('hidden');
+                fBerat.classList.remove('hidden');
+                fBanyaknya.classList.remove('hidden');
+                fHarga.classList.remove('hidden');
+                fTim.classList.add('hidden');
+                fOrang.classList.add('hidden');
+                fUang.classList.add('hidden');
 
                 document.getElementById('edit_namaBarang').value = item.namaBarang || '';
                 document.getElementById('edit_berat').value = item.berat || '';
-                document.getElementById('edit_banyaknya').value = item.banyaknya || '';
-                document.getElementById('edit_harga').value = item.harga || '';
+                document.getElementById('edit_banyaknya').value = item.banyaknya || 0;
+                document.getElementById('edit_harga').value = item.harga || 0;
+            } else {
+                fBarang.classList.add('hidden');
+                fBerat.classList.add('hidden');
+                fBanyaknya.classList.add('hidden');
+                fHarga.classList.add('hidden');
+                fTim.classList.remove('hidden');
+                fOrang.classList.remove('hidden');
+                fUang.classList.remove('hidden');
+
+                document.getElementById('edit_namaTim').value = item.namaTim || 'Sopiyan';
+                document.getElementById('edit_jumlahOrang').value = item.jumlahOrang || 0;
+                document.getElementById('edit_jumlahUang').value = item.jumlahUang || 0;
             }
 
             calculateEditTotal();
@@ -1539,12 +1549,12 @@
         window.calculateEditTotal = function() {
             const type = document.getElementById('edit_type').value;
             let total = 0;
-            if (type === 'pembagian') {
-                total = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
+            if (type !== 'pembagian') {
+                const q = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
+                const h = parseFloat(document.getElementById('edit_harga').value) || 0;
+                total = q * h;
             } else {
-                const qty = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
-                const harga = parseFloat(document.getElementById('edit_harga').value) || 0;
-                total = qty * harga;
+                total = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
             }
             document.getElementById('edit_jumlah_display').value = formatRupiah(total);
         };
@@ -1555,35 +1565,56 @@
             const id = document.getElementById('edit_id').value;
             const submitBtn = document.getElementById('editSubmitBtn');
 
-            let updatedFields = {
+            let updatePayload = {
                 tanggal: document.getElementById('edit_tanggal').value
             };
 
             let rawJumlah = 0;
-            if (type === 'pembagian') {
-                const namaTimVal = document.getElementById('edit_namaTim').value;
-                rawJumlah = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
-                updatedFields.namaTim = namaTimVal;
-                updatedFields.namaTimOtomatis = getNamaTimAutomatic(namaTimVal);
-                updatedFields.jumlahOrang = parseInt(document.getElementById('edit_jumlahOrang').value) || 0;
-                updatedFields.jumlahUang = rawJumlah;
-                updatedFields.rawJumlah = rawJumlah;
-            } else {
+            let identifierName = "";
+
+            if (type !== 'pembagian') {
                 const qty = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
-                const harga = parseFloat(document.getElementById('edit_harga').value) || 0;
-                rawJumlah = qty * harga;
-                updatedFields.namaBarang = document.getElementById('edit_namaBarang').value;
-                updatedFields.berat = document.getElementById('edit_berat').value;
-                updatedFields.banyaknya = qty;
-                updatedFields.harga = harga;
-                updatedFields.rawJumlah = rawJumlah;
+                const hrg = parseFloat(document.getElementById('edit_harga').value) || 0;
+                rawJumlah = qty * hrg;
+                identifierName = document.getElementById('edit_namaBarang').value;
+
+                updatePayload.namaBarang = identifierName;
+                updatePayload.berat = document.getElementById('edit_berat').value;
+                updatePayload.banyaknya = qty;
+                updatePayload.harga = hrg;
+            } else {
+                rawJumlah = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
+                identifierName = document.getElementById('edit_namaTim').value;
+
+                updatePayload.namaTim = identifierName;
+                updatePayload.namaTimOtomatis = getNamaTimAutomatic(identifierName);
+                updatePayload.jumlahOrang = parseInt(document.getElementById('edit_jumlahOrang').value) || 0;
+                updatePayload.jumlahUang = rawJumlah;
+            }
+            updatePayload.rawJumlah = rawJumlah;
+
+            if (type === 'pembelian') {
+                const oldItem = window.appData.pembelian.find(d => d.id === id);
+                const oldVal = oldItem ? oldItem.rawJumlah : 0;
+                const selisih = rawJumlah - oldVal;
+                if (selisih > window.saldoPembelianKhusus) {
+                    showToast('Saldo Tidak Cukup', `Saldo pembelian khusus tidak mencukupi penambahan sebesar ${formatRupiah(selisih)}.`, 'error');
+                    return;
+                }
             }
 
             try {
                 submitBtn.disabled = true;
                 submitBtn.innerText = 'Menyimpan...';
 
-                await updateDoc(doc(db, type, id), updatedFields);
+                if (type === 'pembelian') {
+                    const oldItem = window.appData.pembelian.find(d => d.id === id);
+                    const oldVal = oldItem ? oldItem.rawJumlah : 0;
+                    window.saldoPembelianKhusus += (oldVal - rawJumlah);
+                    await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: window.saldoPembelianKhusus });
+                }
+
+                await updateDoc(doc(db, type, id), updatePayload);
                 closeEditModal();
                 await loadAllDataFromFirebase();
                 showToast('Berhasil', 'Data transaksi berhasil diperbarui.', 'success');
@@ -1596,65 +1627,64 @@
             }
         };
 
-        // SALDO & EXPORT
         window.loadSaldoData = function() {
-            let totalPenjualan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            let totalPemasukan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
             let totalPembagian = window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
-            let totalPembelianTerpakai = window.appData.pembelian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            let totalPembelian = window.appData.pembelian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
 
-            // Perhitungan Saldo Global
-            let saldoGlobalBersih = totalPenjualan - totalPembagian - window.saldoPembelianKhusus - totalPembelianTerpakai;
+            let saldoGlobalBersih = totalPemasukan - totalPembagian - window.saldoPembelianKhusus - totalPembelian;
             let saldoGlobalKotor = saldoGlobalBersih + window.saldoPembelianKhusus;
 
             document.getElementById('saldoGlobalDisplay').innerText = formatRupiah(saldoGlobalBersih);
             document.getElementById('saldoGlobalKotorDisplay').innerText = formatRupiah(saldoGlobalKotor);
-            document.getElementById('saldoPemasukanDisplay').innerText = formatRupiah(totalPenjualan);
+            document.getElementById('saldoPemasukanDisplay').innerText = formatRupiah(totalPemasukan);
             document.getElementById('saldoPembelianDisplay').innerText = formatRupiah(window.saldoPembelianKhusus);
             document.getElementById('saldoPengeluaranDisplay').innerText = formatRupiah(totalPembagian);
 
-            // Render Tabel Riwayat
-            const container = document.getElementById('tableContainer_saldo');
             const startDate = document.getElementById('start_saldo').value;
             const endDate = document.getElementById('end_saldo').value;
 
-            let allTransactions = [];
-
-            window.appData.penjualan.forEach(i => allTransactions.push({ ...i, category: 'Penjualan', typeClass: 'text-emerald-600 bg-emerald-50' }));
-            window.appData.pembelian.forEach(i => allTransactions.push({ ...i, category: 'Pembelian', typeClass: 'text-blue-600 bg-blue-50' }));
-            window.appData.pembagian.forEach(i => allTransactions.push({ ...i, category: 'Pembagian', typeClass: 'text-red-600 bg-red-50' }));
+            let allHistory = [];
+            window.appData.penjualan.forEach(item => allHistory.push({ ...item, jenis: 'Penjualan', masuk: item.rawJumlah, keluar: 0 }));
+            window.appData.pembelian.forEach(item => allHistory.push({ ...item, jenis: 'Pembelian', masuk: 0, keluar: item.rawJumlah }));
+            window.appData.pembagian.forEach(item => allHistory.push({ ...item, jenis: 'Pembagian', masuk: 0, keluar: item.rawJumlah }));
 
             if (startDate && endDate) {
-                allTransactions = allTransactions.filter(item => item.tanggal >= startDate && item.tanggal <= endDate);
+                allHistory = allHistory.filter(item => item.tanggal >= startDate && item.tanggal <= endDate);
             }
 
-            if (allTransactions.length === 0) {
+            allHistory.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            const container = document.getElementById('tableContainer_saldo');
+            if (allHistory.length === 0) {
                 container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">Belum ada riwayat transaksi pada rentang tanggal ini.</div>`;
                 return;
             }
 
-            allTransactions.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-
-            let html = `<table id="saldoHistoryTable" class="w-full text-left border-collapse text-sm">
+            let html = `<table class="w-full text-left border-collapse text-sm">
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
                         <th class="p-3">Tanggal</th>
-                        <th class="p-3">Kategori</th>
-                        <th class="p-3">Keterangan</th>
-                        <th class="p-3">Nominal Total</th>
+                        <th class="p-3">Jenis Transaksi</th>
+                        <th class="p-3">Keterangan / Nama</th>
+                        <th class="p-3 text-emerald-600">Pemasukan (+)</th>
+                        <th class="p-3 text-red-600">Pengeluaran (-)</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">`;
 
-            allTransactions.forEach(item => {
+            allHistory.forEach(item => {
                 let desc = item.namaBarang || item.namaTim || '-';
+                if(item.jenis === 'Pembagian') desc += ` (${item.namaTimOtomatis || '-'})`;
+                
                 html += `<tr class="hover:bg-gray-50">
                     <td class="p-3 font-medium">${formatDateID(item.tanggal)}</td>
-                    <td class="p-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${item.typeClass}">${item.category}</span></td>
+                    <td class="p-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${item.jenis === 'Penjualan' ? 'bg-emerald-50 text-emerald-700' : item.jenis === 'Pembelian' ? 'bg-blue-50 text-blue-700' : 'bg-red-50 text-red-700'}">${item.jenis}</span></td>
                     <td class="p-3 text-gray-700">${desc}</td>
-                    <td class="p-3 font-bold">${formatRupiah(item.rawJumlah)}</td>
+                    <td class="p-3 font-bold text-emerald-600">${item.masuk > 0 ? formatRupiah(item.masuk) : '-'}</td>
+                    <td class="p-3 font-bold text-red-600">${item.keluar > 0 ? formatRupiah(item.keluar) : '-'}</td>
                 </tr>`;
             });
-
             html += `</tbody></table>`;
             container.innerHTML = html;
         };
@@ -1669,73 +1699,79 @@
             document.getElementById('mediaModal').classList.add('hidden');
         };
 
-        window.downloadCurrentMediaImage = function() {
+        window.downloadCurrentMediaImage = async function() {
             if (!window.currentMediaUrl) return;
-            const a = document.createElement('a');
-            a.href = window.currentMediaUrl;
-            a.download = 'dokumentasi.jpg';
-            a.target = '_blank';
-            a.click();
+            try {
+                const response = await fetch(window.currentMediaUrl);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `Dokumentasi_Limbah_${Date.now()}.jpg`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('Berhasil', 'Gambar berhasil diunduh.', 'success');
+            } catch (err) {
+                window.open(window.currentMediaUrl, '_blank');
+            }
         };
 
-        // NOTA & EXPORT LOGIC
         window.openNotaPreviewModal = function(type) {
             const startDate = document.getElementById(`start_${type}`).value;
             window.currentNotaDownloadInfo = { type, startDate };
 
-            let list = window.appData[type].filter(item => item.tanggal === startDate);
-            if (list.length === 0) {
-                showToast('Informasi', 'Tidak ada transaksi pada tanggal yang dipilih.', 'info');
+            let data = window.appData[type].filter(item => item.tanggal === startDate);
+            if (data.length === 0) {
+                showToast('Perhatian', `Tidak ada data ${type} pada tanggal ${formatDateID(startDate)} untuk dijadikan nota.`, 'error');
                 return;
             }
 
-            const headerTitle = document.getElementById('notaHeaderTitle');
-            const headerTanggal = document.getElementById('notaHeaderTanggal');
-            const tableHead = document.getElementById('notaTableHeadRow');
-            const tableBody = document.getElementById('notaTableBody');
-            const headerTotal = document.getElementById('notaHeaderTotal');
+            document.getElementById('notaHeaderTitle').innerText = `NOTA ${type.toUpperCase()} HARIAN`;
+            document.getElementById('notaHeaderTanggal').innerText = `Tanggal: ${formatDateID(startDate)}`;
 
-            headerTanggal.innerText = `Tanggal: ${formatDateID(startDate)}`;
+            const headRow = document.getElementById('notaTableHeadRow');
+            const tbody = document.getElementById('notaTableBody');
+            tbody.innerHTML = '';
 
-            let headHtml = '';
-            let bodyHtml = '';
-            let total = 0;
+            let grandTotal = 0;
 
-            if (type === 'pembagian') {
-                headerTitle.innerText = "NOTA PEMBAGIAN UANG LIMBAH";
-                headHtml = `<th class="p-2 border-b">Penerima</th><th class="p-2 border-b">Tim</th><th class="p-2 border-b text-center">Orang</th><th class="p-2 border-b text-right">Jumlah</th>`;
-                list.forEach(item => {
-                    total += (item.rawJumlah || 0);
-                    bodyHtml += `<tr>
-                        <td class="p-2 border-b">${item.namaTim || '-'}</td>
-                        <td class="p-2 border-b">${item.namaTimOtomatis || '-'}</td>
-                        <td class="p-2 border-b text-center">${item.jumlahOrang || 0}</td>
-                        <td class="p-2 border-b text-right">${formatRupiah(item.rawJumlah)}</td>
+            if (type !== 'pembagian') {
+                headRow.innerHTML = `<th class="pb-2">Barang</th><th class="pb-2">Berat</th><th class="pb-2">Qty</th><th class="pb-2">Harga</th><th class="pb-2 text-right">Total</th>`;
+                data.forEach(item => {
+                    grandTotal += item.rawJumlah;
+                    tbody.innerHTML += `<tr class="border-b border-gray-100">
+                        <td class="py-2 font-medium">${item.namaBarang}</td>
+                        <td class="py-2 text-gray-500">${item.berat}</td>
+                        <td class="py-2">${item.banyaknya}</td>
+                        <td class="py-2">${formatRupiah(item.harga)}</td>
+                        <td class="py-2 text-right font-bold">${formatRupiah(item.rawJumlah)}</td>
                     </tr>`;
                 });
             } else {
-                headerTitle.innerText = type === 'penjualan' ? "NOTA PENJUALAN LIMBAH" : "NOTA PEMBELIAN LIMBAH";
-                headHtml = `<th class="p-2 border-b">Nama Barang</th><th class="p-2 border-b">Berat</th><th class="p-2 border-b text-center">Qty</th><th class="p-2 border-b text-right">Harga</th><th class="p-2 border-b text-right">Total</th>`;
-                list.forEach(item => {
-                    total += (item.rawJumlah || 0);
-                    bodyHtml += `<tr>
-                        <td class="p-2 border-b">${item.namaBarang || '-'}</td>
-                        <td class="p-2 border-b">${item.berat || '-'}</td>
-                        <td class="p-2 border-b text-center">${item.banyaknya || 0}</td>
-                        <td class="p-2 border-b text-right">${formatRupiah(item.harga)}</td>
-                        <td class="p-2 border-b text-right">${formatRupiah(item.rawJumlah)}</td>
+                headRow.innerHTML = `<th class="pb-2">Penerima</th><th class="pb-2">Tim</th><th class="pb-2">Org</th><th class="pb-2 text-right">Jumlah Uang</th>`;
+                data.forEach(item => {
+                    grandTotal += item.rawJumlah;
+                    tbody.innerHTML += `<tr class="border-b border-gray-100">
+                        <td class="py-2 font-medium">${item.namaTim}</td>
+                        <td class="py-2 text-gray-500">${item.namaTimOtomatis}</td>
+                        <td class="py-2">${item.jumlahOrang}</td>
+                        <td class="py-2 text-right font-bold">${formatRupiah(item.rawJumlah)}</td>
                     </tr>`;
                 });
             }
 
-            tableHead.innerHTML = headHtml;
-            tableBody.innerHTML = bodyHtml;
-            headerTotal.innerText = formatRupiah(total);
+            document.getElementById('notaHeaderTotal').innerText = formatRupiah(grandTotal);
 
-            const notaClone = document.getElementById('notaBox').cloneNode(true);
             const wrapper = document.getElementById('notaPreviewWrapper');
+            const notaBox = document.getElementById('notaBox').cloneNode(true);
+            notaBox.style.position = 'relative';
+            notaBox.style.left = '0';
+            notaBox.style.zIndex = '1';
+            notaBox.style.width = '100%';
+            notaBox.style.maxWidth = '450px';
             wrapper.innerHTML = '';
-            wrapper.appendChild(notaClone);
+            wrapper.appendChild(notaBox);
 
             document.getElementById('notaPreviewModal').classList.remove('hidden');
         };
@@ -1747,109 +1783,123 @@
         window.executeDownloadNota = async function() {
             const format = document.getElementById('downloadFormatSelect').value;
             const { type, startDate } = window.currentNotaDownloadInfo;
-            const filename = `Nota_${type}_${startDate}`;
+            const element = document.getElementById('notaPreviewWrapper').firstElementChild;
 
-            if (format === 'png') {
-                const element = document.getElementById('notaBox');
-                const canvas = await html2canvas(element, { scale: 2 });
-                const link = document.createElement('a');
-                link.download = `${filename}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            } else if (format === 'pdf') {
-                const element = document.getElementById('notaBox');
-                const canvas = await html2canvas(element, { scale: 2 });
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
-                pdf.save(`${filename}.pdf`);
-            } else if (format === 'excel') {
-                let list = window.appData[type].filter(item => item.tanggal === startDate);
-                let excelData = list.map(item => {
-                    if (type === 'pembagian') {
-                        return {
-                            Tanggal: formatDateID(item.tanggal),
-                            Penerima: item.namaTim || '-',
-                            'Nama Tim': item.namaTimOtomatis || '-',
-                            'Jumlah Orang': item.jumlahOrang || 0,
-                            Total: item.rawJumlah || 0
-                        };
-                    } else {
-                        return {
-                            Tanggal: formatDateID(item.tanggal),
-                            'Nama Barang': item.namaBarang || '-',
-                            Berat: item.berat || '-',
-                            Qty: item.banyaknya || 0,
-                            Harga: item.harga || 0,
-                            Total: item.rawJumlah || 0
-                        };
-                    }
-                });
+            if (format === 'excel') {
+                let data = window.appData[type].filter(item => item.tanggal === startDate);
+                let excelData = data.map(item => ({
+                    Tanggal: item.tanggal,
+                    Nama: item.namaBarang || item.namaTim,
+                    Keterangan: item.berat || item.namaTimOtomatis,
+                    Jumlah: item.banyaknya || item.jumlahOrang,
+                    Total: item.rawJumlah
+                }));
                 const ws = XLSX.utils.json_to_sheet(excelData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Nota");
-                XLSX.writeFile(wb, `${filename}.xlsx`);
+                XLSX.writeFile(wb, `Nota_${type}_${startDate}.xlsx`);
+                closeNotaPreviewModal();
+                showToast('Berhasil', 'Nota Excel berhasil diunduh.', 'success');
+                return;
             }
 
-            closeNotaPreviewModal();
-            showToast('Berhasil', 'Nota berhasil diunduh.', 'success');
-        };
-
-        window.exportSaldoHistory = async function(format) {
-            const startDate = document.getElementById('start_saldo').value;
-            const endDate = document.getElementById('end_saldo').value;
-            const filename = `Riwayat_Saldo_${startDate}_sd_${endDate}`;
-
-            if (format === 'png' || format === 'pdf') {
-                const element = document.getElementById('saldoHistoryTable');
-                if (!element) {
-                    showToast('Perhatian', 'Tidak ada data untuk dieksport.', 'error');
-                    return;
-                }
+            try {
+                showToast('Memproses', 'Menyiapkan dokumen nota...', 'info');
                 const canvas = await html2canvas(element, { scale: 2 });
+                
                 if (format === 'png') {
-                    const link = document.createElement('a');
-                    link.download = `${filename}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                } else {
+                    const image = canvas.toDataURL("image/png");
+                    const a = document.createElement('a');
+                    a.href = image;
+                    a.download = `Nota_${type}_${startDate}.png`;
+                    a.click();
+                    showToast('Berhasil', 'Nota PNG berhasil diunduh.', 'success');
+                } else if (format === 'pdf') {
                     const imgData = canvas.toDataURL('image/png');
                     const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF('p', 'mm', 'a4');
-                    const imgProps = pdf.getImageProperties(imgData);
-                    const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
-                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                    pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
-                    pdf.save(`${filename}.pdf`);
+                    const imgWidth = 190;
+                    const pageHeight = 295;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 10;
+
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+
+                    pdf.save(`Nota_${type}_${startDate}.pdf`);
+                    showToast('Berhasil', 'Nota PDF berhasil diunduh.', 'success');
                 }
-            } else if (format === 'excel') {
-                let allTransactions = [];
-                window.appData.penjualan.forEach(i => allTransactions.push({ ...i, Kategori: 'Penjualan' }));
-                window.appData.pembelian.forEach(i => allTransactions.push({ ...i, Kategori: 'Pembelian' }));
-                window.appData.pembagian.forEach(i => allTransactions.push({ ...i, Kategori: 'Pembagian' }));
+                closeNotaPreviewModal();
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal', 'Terjadi kesalahan saat mengunduh nota.', 'error');
+            }
+        };
 
-                if (startDate && endDate) {
-                    allTransactions = allTransactions.filter(item => item.tanggal >= startDate && item.tanggal <= endDate);
-                }
+        window.exportSaldoHistory = async function(format) {
+            const element = document.getElementById('tableContainer_saldo');
+            if (!element) return;
 
-                let excelData = allTransactions.map(item => ({
-                    Tanggal: formatDateID(item.tanggal),
-                    Kategori: item.Kategori,
-                    Keterangan: item.namaBarang || item.namaTim || '-',
-                    Total: item.rawJumlah || 0
-                }));
+            if (format === 'excel') {
+                let allHistory = [];
+                window.appData.penjualan.forEach(item => allHistory.push({ Tanggal: item.tanggal, Jenis: 'Penjualan', Keterangan: item.namaBarang, Masuk: item.rawJumlah, Keluar: 0 }));
+                window.appData.pembelian.forEach(item => allHistory.push({ Tanggal: item.tanggal, Jenis: 'Pembelian', Keterangan: item.namaBarang, Masuk: 0, Keluar: item.rawJumlah }));
+                window.appData.pembagian.forEach(item => allHistory.push({ Tanggal: item.tanggal, Jenis: 'Pembagian', Keterangan: `${item.namaTim} (${item.namaTimOtomatis})`, Masuk: 0, Keluar: item.rawJumlah }));
 
-                const ws = XLSX.utils.json_to_sheet(excelData);
+                const ws = XLSX.utils.json_to_sheet(allHistory);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Riwayat Saldo");
-                XLSX.writeFile(wb, `${filename}.xlsx`);
+                XLSX.writeFile(wb, `Riwayat_Saldo_${getTodayDateString()}.xlsx`);
+                showToast('Berhasil', 'Riwayat Saldo Excel berhasil diunduh.', 'success');
+                return;
             }
 
-            showToast('Berhasil', 'Riwayat saldo berhasil dieksport.', 'success');
+            try {
+                showToast('Memproses', 'Menyiapkan file ekspor...', 'info');
+                const canvas = await html2canvas(element, { scale: 2 });
+                
+                if (format === 'png') {
+                    const image = canvas.toDataURL("image/png");
+                    const a = document.createElement('a');
+                    a.href = image;
+                    a.download = `Riwayat_Saldo_${getTodayDateString()}.png`;
+                    a.click();
+                    showToast('Berhasil', 'Riwayat Saldo PNG berhasil diunduh.', 'success');
+                } else if (format === 'pdf') {
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 190;
+                    const pageHeight = 295;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    let heightLeft = imgHeight;
+                    let position = 10;
+
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+
+                    pdf.save(`Riwayat_Saldo_${getTodayDateString()}.pdf`);
+                    showToast('Berhasil', 'Riwayat Saldo PDF berhasil diunduh.', 'success');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal', 'Terjadi kesalahan saat mengekspor.', 'error');
+            }
         };
     </script>
 </body>
