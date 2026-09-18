@@ -543,7 +543,7 @@
                     <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center">
                         <i class="fa-brands fa-whatsapp text-emerald-600 text-2xl mr-3"></i> Kelola Nomor Penerima Pesan WhatsApp
                     </h2>
-                    <p class="text-xs text-gray-500 mb-6">Atur nomor WhatsApp penerima laporan otomatis. Berikan centang untuk mengirim pesan ke nomor yang bersangkutan.</p>
+                    <p class="text-xs text-gray-500 mb-6">Atur nomor WhatsApp penerima laporan otomatis. Berikan centang untuk mengirim pesan atau klik tombol Edit untuk memperbarui nama dan nomor.</p>
 
                     <form onsubmit="handleAddWaNumber(event)" class="flex flex-col sm:flex-row gap-3 mb-6">
                         <input type="text" id="newWaLabel" required placeholder="Label/Nama Pemilik (Contoh: Bpk Supri)" class="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
@@ -560,7 +560,7 @@
                                     <th class="p-3.5 text-center w-16">Kirim</th>
                                     <th class="p-3.5">Nama / Label</th>
                                     <th class="p-3.5">Nomor WhatsApp</th>
-                                    <th class="p-3.5 text-center w-24">Aksi</th>
+                                    <th class="p-3.5 text-center w-32">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="waNumbersTableBody" class="divide-y divide-gray-100">
@@ -571,6 +571,36 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- MODAL EDIT NOMOR WHATSAPP -->
+    <div id="modalEditWa" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="text-base font-bold text-gray-900 flex items-center">
+                    <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-pen-to-square"></i></span>
+                    Edit Nomor WhatsApp
+                </h3>
+                <button onclick="closeModalEditWa()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleUpdateWaNumber(event)" class="space-y-4">
+                <input type="hidden" id="editWaIndex">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nama / Label</label>
+                    <input type="text" id="editWaLabel" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nomor WhatsApp</label>
+                    <input type="text" id="editWaNumber" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeModalEditWa()" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl text-xs">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs shadow-md">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- MODAL MEDIA VIEWER -->
@@ -594,13 +624,13 @@
 
     <!-- MODAL PRATINJAU NOTA HARIAN -->
     <div id="notaPreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
+        <div class="relative max-w-xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
                 <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-file-lines mr-2 text-emerald-600"></i>Pratinjau Nota</h3>
                 <button onclick="closeNotaPreviewModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 flex items-center justify-center bg-gray-100 overflow-auto flex-1">
-                <div id="notaPreviewWrapper" class="transform scale-90 origin-top"></div>
+                <div id="notaPreviewWrapper" class="w-full flex justify-center"></div>
             </div>
             <div class="p-4 bg-gray-50 border-t flex flex-col space-y-3">
                 <div class="flex items-center justify-between">
@@ -724,7 +754,6 @@
             return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateString;
         }
 
-        // FUNGSI NOTIFIKASI WA DENGAN FILTER CENTANG AKTIF
         async function sendWhatsAppNotification(message, targetList = null) {
             try {
                 let targets = [];
@@ -1040,7 +1069,10 @@
                     <td class="p-3 font-semibold text-gray-800">${item.name}</td>
                     <td class="p-3 text-gray-600">${item.number}</td>
                     <td class="p-3 text-center">
-                        <button onclick="deleteWaNumber(${index})" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50" title="Hapus Nomor"><i class="fa-solid fa-trash-can"></i></button>
+                        <div class="flex items-center justify-center space-x-2">
+                            <button onclick="openModalEditWa(${index})" class="text-amber-600 hover:text-amber-800 p-1.5 rounded-lg hover:bg-amber-50" title="Edit Nomor"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteWaNumber(${index})" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50" title="Hapus Nomor"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
                     </td>
                 </tr>`;
             });
@@ -1074,6 +1106,37 @@
             await saveWaNumbers();
             renderWaNumbersTable();
             showToast("Berhasil", "Nomor WhatsApp baru berhasil ditambahkan", "success");
+        };
+
+        window.openModalEditWa = function(index) {
+            const item = window.waNumbersList[index];
+            if (!item) return;
+            document.getElementById('editWaIndex').value = index;
+            document.getElementById('editWaLabel').value = item.name;
+            document.getElementById('editWaNumber').value = item.number;
+            document.getElementById('modalEditWa').classList.remove('hidden');
+        };
+
+        window.closeModalEditWa = function() {
+            document.getElementById('modalEditWa').classList.add('hidden');
+        };
+
+        window.handleUpdateWaNumber = async function(e) {
+            e.preventDefault();
+            const index = parseInt(document.getElementById('editWaIndex').value, 10);
+            const name = document.getElementById('editWaLabel').value.trim();
+            let number = document.getElementById('editWaNumber').value.trim().replace(/[^0-9]/g, '');
+
+            if (number.startsWith('0')) number = '62' + number.slice(1);
+
+            if (window.waNumbersList[index]) {
+                window.waNumbersList[index].name = name;
+                window.waNumbersList[index].number = number;
+                await saveWaNumbers();
+                renderWaNumbersTable();
+                closeModalEditWa();
+                showToast("Berhasil", "Nomor WhatsApp berhasil diperbarui", "success");
+            }
         };
 
         window.deleteWaNumber = function(index) {
@@ -1181,7 +1244,6 @@
                 await loadAllDataFromFirebase();
                 showToast('Berhasil Menyimpan', 'Data berhasil disimpan!', 'success');
 
-                // PERHITUNGAN SALDO
                 let totalPenjualan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
                 let totalPembagian = window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
                 let saldoGlobalBersih = totalPenjualan - totalPembagian - window.saldoPembelianKhusus;
@@ -1189,7 +1251,6 @@
 
                 let namaPenerima = identifierName || '';
 
-                // PESAN WA BERDASARKAN DUA ATURAN PENERIMA
                 let waMessage = '';
                 if (type === 'pembagian') {
                     waMessage = `> *Pesan Otomatis*\n\n` +
@@ -1219,7 +1280,6 @@
                                 `Sisa saldo : ${formatRupiah(saldoGlobalKotor)}`;
                 }
 
-                // Kirim hanya ke nomor aktif (centang)
                 await sendWhatsAppNotification(waMessage);
 
             } catch (err) {
@@ -1496,7 +1556,6 @@
             container.innerHTML = html;
         };
 
-        // EXPORT RIWAYAT SALDO & NOTA PERBAIKAN
         window.exportSaldoHistory = function(format) {
             const startDate = document.getElementById('start_saldo').value;
             const endDate = document.getElementById('end_saldo').value;
@@ -1574,7 +1633,7 @@
             window.currentNotaDownloadInfo = { type, startDate };
 
             document.getElementById('notaHeaderTitle').innerText = `BUKTI TRANSAKSI ${type.toUpperCase()}`;
-            document.getElementById('notaHeaderTanggal').innerText = `Tanggal: ${formatDateID(startDate)}`;
+            document.getElementById('notaHeaderTanggal').innerText = `Tanggal : ${formatDateID(startDate)}`;
 
             let headRowHtml = '';
             let tbodyHtml = '';
@@ -1625,7 +1684,6 @@
             document.getElementById('notaPreviewModal').classList.add('hidden');
         };
 
-        // PERBAIKAN FUNGSI EKSPOR NOTA (UNDUH TERSIMPAN FISIK)
         window.executeDownloadNota = function() {
             const { type, startDate } = window.currentNotaDownloadInfo;
             const selectedFormat = document.getElementById('downloadFormatSelect').value;
@@ -1646,7 +1704,13 @@
 
             showToast('Memproses', 'Mengunduh nota...', 'info');
 
-            html2canvas(notaBoxTarget, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+            html2canvas(notaBoxTarget, { 
+                scale: 2, 
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                windowWidth: notaBoxTarget.scrollWidth,
+                windowHeight: notaBoxTarget.scrollHeight
+            }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 
                 if (selectedFormat === 'png') {
