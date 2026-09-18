@@ -68,7 +68,7 @@
         </div>
     </div>
 
-    <!-- MODAL TRANSFER BALIK SALDO PEMBELIAN KE SALDO PENJUALAN (SALDO GLOBAL) -->
+    <!-- MODAL TRANSFER BALIK SALDO PEMBELIAN KE SALDO PENJUALAN -->
     <div id="modalTransferSaldoKePenjualan" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
             <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -257,6 +257,9 @@
                 <button onclick="switchTab('saldo')" id="tabBtn-saldo" class="tab-btn px-5 py-2.5 rounded-xl font-semibold text-sm transition-all bg-white text-gray-600 hover:bg-gray-100 flex items-center space-x-2">
                     <i class="fa-solid fa-wallet"></i><span>Saldo & Riwayat</span>
                 </button>
+                <button onclick="switchTab('adminWA')" id="tabBtn-adminWA" class="admin-only tab-btn px-5 py-2.5 rounded-xl font-semibold text-sm transition-all bg-white text-gray-600 hover:bg-gray-100 flex items-center space-x-2">
+                    <i class="fa-brands fa-whatsapp text-emerald-600"></i><span>Kelola WhatsApp</span>
+                </button>
             </div>
 
             <!-- PENJUALAN -->
@@ -409,7 +412,6 @@
                                 <option value="Suryati">Suryati</option>
                                 <option value="Lainnya">Lainnya (Ketik Manual)</option>
                             </select>
-                            <!-- Input manual jika memilih Lainnya -->
                             <input type="text" name="namaTimCustom" id="pembagian_namaTimCustom" placeholder="Isi nama penerima bebas..." class="hidden mt-2 w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
                         </div>
                         <div>
@@ -534,6 +536,40 @@
                     <div id="tableContainer_saldo" class="overflow-x-auto"></div>
                 </div>
             </div>
+
+            <!-- FITUR MANAJEMEN WHATSAPP (KHUSUS ADMIN) -->
+            <div id="content-adminWA" class="tab-content hidden space-y-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+                    <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center">
+                        <i class="fa-brands fa-whatsapp text-emerald-600 text-2xl mr-3"></i> Kelola Nomor Penerima Pesan WhatsApp
+                    </h2>
+                    <p class="text-xs text-gray-500 mb-6">Atur nomor WhatsApp penerima laporan otomatis. Berikan centang untuk mengirim pesan ke nomor yang bersangkutan.</p>
+
+                    <form onsubmit="handleAddWaNumber(event)" class="flex flex-col sm:flex-row gap-3 mb-6">
+                        <input type="text" id="newWaLabel" required placeholder="Label/Nama Pemilik (Contoh: Bpk Supri)" class="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        <input type="text" id="newWaNumber" required placeholder="Nomor WA (Contoh: 628812345678)" class="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs shadow-md">
+                            <i class="fa-solid fa-plus mr-1"></i> Tambah Nomor
+                        </button>
+                    </form>
+
+                    <div class="overflow-x-auto border border-gray-100 rounded-xl">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 border-b text-gray-600 text-xs uppercase">
+                                    <th class="p-3.5 text-center w-16">Kirim</th>
+                                    <th class="p-3.5">Nama / Label</th>
+                                    <th class="p-3.5">Nomor WhatsApp</th>
+                                    <th class="p-3.5 text-center w-24">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="waNumbersTableBody" class="divide-y divide-gray-100">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -556,7 +592,7 @@
         </div>
     </div>
 
-    <!-- MODAL PRATINJAU NOTA HARIAN TERMASUK PILIHAN FORMAT -->
+    <!-- MODAL PRATINJAU NOTA HARIAN -->
     <div id="notaPreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div class="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
@@ -586,7 +622,7 @@
     </div>
 
     <!-- TEMPLATE NOTA TERSEMBUNYI UNTUK GENERATE PNG/PDF -->
-    <div id="notaContainer" class="fixed left-[-9999px] top-0 opacity-0 pointer-events-none z-[-999]">
+    <div id="notaContainer" class="fixed left-[-9999px] top-0 pointer-events-none z-[-999]">
         <div id="notaBox" class="bg-white w-[550px] p-8 text-gray-800 font-sans border border-gray-200 shadow-xl rounded-2xl">
             <div class="text-center border-b pb-4 mb-4">
                 <h2 id="notaHeaderTitle" class="font-bold text-lg text-emerald-700 uppercase">BUKTI TRANSAKSI NOTA</h2>
@@ -631,19 +667,31 @@
         const db = getFirestore(app);
 
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzMpMNbZmS6682wqt4zCa_I0ATjjefLmNCMEbSjRarNpM2gyucyBAe6DneXj49ioUMMQ/exec';
-        
         const WA_TOKEN = 'uJ8CF79nyQaJbPrVGeeE';
-        // Target penerima WhatsApp utama
         const WA_TARGET_PRIMARY = '6283111399112';
-        // Target penerima khusus transaksi (Penjualan, Pembelian, Pembagian)
-        const WA_TARGET_TRANSACTION = ['6283804346245', '6287785982118', '6281290371304', '6289679349350', '6289622667473', '62895405811803', '6285946289162', '6281995533421', '6283104759905', '6287769433324', '6285215801078', '6282318077476', ];
+
+        // Daftar bawaan default jika Firestore belum terisi
+        const DEFAULT_WA_LIST = [
+            { id: '1', name: 'Nomor Utama 1', number: '6283804346245', active: true },
+            { id: '2', name: 'Nomor Utama 2', number: '6287785982118', active: true },
+            { id: '3', name: 'Nomor Utama 3', number: '6281290371304', active: true },
+            { id: '4', name: 'Nomor Utama 4', number: '6289679349350', active: true },
+            { id: '5', name: 'Nomor Utama 5', number: '6289622667473', active: true },
+            { id: '6', name: 'Nomor Utama 6', number: '62895405811803', active: true },
+            { id: '7', name: 'Nomor Utama 7', number: '6285946289162', active: true },
+            { id: '8', name: 'Nomor Utama 8', number: '6281995533421', active: true },
+            { id: '9', name: 'Nomor Utama 9', number: '6283104759905', active: true },
+            { id: '10', name: 'Nomor Utama 10', number: '6287769433324', active: true },
+            { id: '11', name: 'Nomor Utama 11', number: '6285215801078', active: true },
+            { id: '12', name: 'Nomor Utama 12', number: '6282318077476', active: true }
+        ];
 
         window.appData = { penjualan: [], pembelian: [], pembagian: [] };
-        window.saldoPembelianKhusus = 0; // Saldo khusus pembelian
+        window.waNumbersList = [];
+        window.saldoPembelianKhusus = 0;
         window.currentNotaDownloadInfo = { type: '', startDate: '' };
         window.currentMediaUrl = '';
 
-        // PEMETAAN TIM OTOMATIS BERDASARKAN PENERIMA (DITERIMA)
         function getNamaTimAutomatic(diterimaName) {
             if (diterimaName === 'Nurhayati') return 'Tim Persiapan';
             if (diterimaName === 'Anisa Hayatun Nufus') return 'Tim Pemorsian/Packing';
@@ -654,14 +702,10 @@
             return diterimaName || '-';
         }
 
-        // DETEKSI KONEKSI INTERNET
         function checkInternetConnection() {
             const overlay = document.getElementById('offlineOverlay');
-            if (!navigator.onLine) {
-                overlay.classList.remove('hidden');
-            } else {
-                overlay.classList.add('hidden');
-            }
+            if (!navigator.onLine) overlay.classList.remove('hidden');
+            else overlay.classList.add('hidden');
         }
         window.addEventListener('online', checkInternetConnection);
         window.addEventListener('offline', checkInternetConnection);
@@ -677,16 +721,25 @@
         function formatDateID(dateString) {
             if (!dateString) return '-';
             const parts = dateString.split('-');
-            if (parts.length === 3) {
-                return `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-            return dateString;
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : dateString;
         }
 
-        // FUNGSI NOTIFIKASI WHATSAPP
-        async function sendWhatsAppNotification(message, targetList = [WA_TARGET_PRIMARY]) {
+        // FUNGSI NOTIFIKASI WA DENGAN FILTER CENTANG AKTIF
+        async function sendWhatsAppNotification(message, targetList = null) {
             try {
-                const targetString = Array.isArray(targetList) ? targetList.join(',') : targetList;
+                let targets = [];
+                if (targetList && Array.isArray(targetList)) {
+                    targets = targetList;
+                } else {
+                    targets = window.waNumbersList.filter(item => item.active).map(item => item.number);
+                }
+
+                if (targets.length === 0) {
+                    console.log("Pesan WA tidak terkirim: Tidak ada nomor tujuan yang dicentang.");
+                    return;
+                }
+
+                const targetString = targets.join(',');
                 const bodyData = new URLSearchParams();
                 bodyData.append('target', targetString);
                 bodyData.append('message', message);
@@ -726,21 +779,21 @@
 
             toast.classList.remove('translate-y-[-200%]');
             toast.classList.add('translate-y-0');
-
             setTimeout(() => { hideToast(); }, 4000);
         };
 
         window.hideToast = function() {
             const toast = document.getElementById('toastNotification');
-            toast.classList.remove('translate-y-0');
-            toast.classList.add('translate-y-[-200%]');
+            if (toast) {
+                toast.classList.remove('translate-y-0');
+                toast.classList.add('translate-y-[-200%]');
+            }
         };
 
         window.showCustomConfirm = function(title, message, callback) {
             document.getElementById('confirmTitle').innerText = title;
             document.getElementById('confirmMessage').innerText = message;
             const okBtn = document.getElementById('confirmOkBtn');
-            
             const newOkBtn = okBtn.cloneNode(true);
             okBtn.parentNode.replaceChild(newOkBtn, okBtn);
 
@@ -769,9 +822,8 @@
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             const loginTime = parseInt(localStorage.getItem('loginTime') || '0', 10);
             const now = new Date().getTime();
-            const oneHour = 60 * 60 * 1000;
 
-            if (isLoggedIn && (now - loginTime < oneHour)) {
+            if (isLoggedIn && (now - loginTime < 60 * 60 * 1000)) {
                 showApp();
             } else {
                 localStorage.removeItem('isLoggedIn');
@@ -794,24 +846,20 @@
             const pass = document.getElementById('passwordInput').value.trim();
 
             let role = '';
-            if (user === 'Serang' && pass === 'Mandiri02srg') {
-                role = 'admin';
-            } else if (user === 'Jimi' && pass === 'User123') {
-                role = 'user';
-            }
+            if (user === 'Serang' && pass === 'Mandiri02srg') role = 'admin';
+            else if (user === 'Jimi' && pass === 'User123') role = 'user';
 
             if (role !== '') {
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('userRole', role);
                 localStorage.setItem('loginTime', new Date().getTime().toString());
                 
-                showToast('Login Berhasil', `Selamat datang kembali (${role.toUpperCase()})`, 'success');
+                showToast('Login Berhasil', `Selamat datang (${role.toUpperCase()})`, 'success');
                 showApp();
-
-                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${user} (${role.toUpperCase()})* berhasil *MASUK (LOGIN)* ke dalam Sistem Manajemen Limbah pada ${new Date().toLocaleString('id-ID')}`, [WA_TARGET_PRIMARY]);
+                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${user} (${role.toUpperCase()})* berhasil *MASUK (LOGIN)* pada ${new Date().toLocaleString('id-ID')}`, [WA_TARGET_PRIMARY]);
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
-                showToast('Gagal Masuk', 'Username atau sandi yang Anda masukkan salah.', 'error');
+                showToast('Gagal Masuk', 'Username atau sandi salah.', 'error');
             }
         };
 
@@ -823,28 +871,24 @@
                 localStorage.removeItem('loginTime');
                 document.getElementById('appPage').classList.add('hidden');
                 document.getElementById('loginPage').classList.remove('hidden');
-                showToast('Berhasil Keluar', 'Anda telah keluar dari sesi aplikasi.', 'success');
-
-                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${currentUser.toUpperCase()}* telah *KELUAR (LOGOUT)* dari Sistem Manajemen Limbah pada ${new Date().toLocaleString('id-ID')}`, [WA_TARGET_PRIMARY]);
+                showToast('Berhasil Keluar', 'Sesi berakhir.', 'success');
+                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${currentUser.toUpperCase()}* telah *KELUAR (LOGOUT)* pada ${new Date().toLocaleString('id-ID')}`, [WA_TARGET_PRIMARY]);
             });
         };
 
         window.showApp = function() {
-            const role = localStorage.getItem('userRole') || 'User';
+            const role = localStorage.getItem('userRole') || 'user';
             const roleBadge = document.getElementById('userRoleBadge');
             
             if (role === 'admin') {
                 roleBadge.innerHTML = '<i class="fa-solid fa-shield-halved mr-1"></i> Admin';
                 roleBadge.className = "text-xs font-medium bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200";
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
             } else {
                 roleBadge.innerHTML = '<i class="fa-solid fa-user mr-1"></i> Jimi Kurniawan';
                 roleBadge.className = "text-xs font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200";
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
             }
-
-            ['penjualan', 'pembelian', 'pembagian'].forEach(tab => {
-                const btnNota = document.getElementById(`btnNota_${tab}`);
-                if (btnNota) btnNota.classList.remove('hidden');
-            });
 
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('appPage').classList.remove('hidden');
@@ -862,6 +906,7 @@
             activeBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-100');
             activeBtn.classList.add('bg-emerald-600', 'text-white', 'shadow-md');
             if(tabName === 'saldo') loadSaldoData();
+            if(tabName === 'adminWA') renderWaNumbersTable();
         };
 
         window.handleSelectTim = function(selectEl) {
@@ -952,77 +997,95 @@
             if(clearBtn) clearBtn.classList.add('hidden');
         };
 
-        // FUNGSI TRANSAKSI DEPOSIT DARI SALDO GLOBAL KE SALDO PEMBELIAN
-        window.openModalAddSaldoPembelian = function() {
-            document.getElementById('input_nominal_transfer').value = '';
-            document.getElementById('modalAddSaldoPembelian').classList.remove('hidden');
-        };
+        // KELOLA WA NUMBERS DI FIRESTORE
+        async function loadWaNumbers() {
+            try {
+                const docSnap = await getDoc(doc(db, "settings", "wa_numbers"));
+                if (docSnap.exists() && docSnap.data().list) {
+                    window.waNumbersList = docSnap.data().list;
+                } else {
+                    window.waNumbersList = DEFAULT_WA_LIST;
+                    await setDoc(doc(db, "settings", "wa_numbers"), { list: DEFAULT_WA_LIST });
+                }
+            } catch(e) {
+                console.error("Gagal memuat nomor WA:", e);
+                window.waNumbersList = DEFAULT_WA_LIST;
+            }
+        }
 
-        window.closeModalAddSaldoPembelian = function() {
-            document.getElementById('modalAddSaldoPembelian').classList.add('hidden');
-        };
+        async function saveWaNumbers() {
+            try {
+                await setDoc(doc(db, "settings", "wa_numbers"), { list: window.waNumbersList });
+            } catch(e) {
+                console.error("Gagal menyimpan nomor WA:", e);
+                showToast("Gagal", "Pengaturan WA tidak dapat disimpan", "error");
+            }
+        }
 
-        window.handleTransferSaldoPembelian = async function(e) {
-            e.preventDefault();
-            const nominal = parseFloat(document.getElementById('input_nominal_transfer').value) || 0;
-            
-            let totalPenjualan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
-            let totalPembagian = window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
-            let saldoGlobalBersih = totalPenjualan - totalPembagian - window.saldoPembelianKhusus;
+        window.renderWaNumbersTable = function() {
+            const tbody = document.getElementById('waNumbersTableBody');
+            if (!tbody) return;
 
-            if (nominal > saldoGlobalBersih) {
-                showToast('Saldo Tidak Cukup', 'Nominal transfer melebihi Sisa Saldo Global Bersih saat ini!', 'error');
+            if (window.waNumbersList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400">Belum ada nomor tersimpan.</td></tr>`;
                 return;
             }
 
-            try {
-                const newSaldoPembelian = window.saldoPembelianKhusus + nominal;
-                await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: newSaldoPembelian });
-                window.saldoPembelianKhusus = newSaldoPembelian;
-                
-                closeModalAddSaldoPembelian();
-                loadSaldoData();
-                showToast('Saldo Berhasil Ditambah', `Saldo Khusus Pembelian bertambah ${formatRupiah(nominal)} dari Saldo Global Bersih.`, 'success');
-            } catch (err) {
-                console.error(err);
-                showToast('Gagal Transfer', 'Terjadi kesalahan sistem.', 'error');
-            }
+            let html = '';
+            window.waNumbersList.forEach((item, index) => {
+                html += `<tr class="hover:bg-gray-50">
+                    <td class="p-3 text-center">
+                        <input type="checkbox" ${item.active ? 'checked' : ''} onchange="toggleWaNumberActive(${index})" class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer">
+                    </td>
+                    <td class="p-3 font-semibold text-gray-800">${item.name}</td>
+                    <td class="p-3 text-gray-600">${item.number}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteWaNumber(${index})" class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50" title="Hapus Nomor"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
         };
 
-        // FUNGSI TRANSFER BALIK SALDO KHUSUS PEMBELIAN KE SALDO PENJUALAN (SALDO GLOBAL BERSIH)
-        window.openModalTransferSaldoKePenjualan = function() {
-            document.getElementById('input_nominal_transfer_balik').value = '';
-            document.getElementById('modalTransferSaldoKePenjualan').classList.remove('hidden');
+        window.toggleWaNumberActive = async function(index) {
+            window.waNumbersList[index].active = !window.waNumbersList[index].active;
+            await saveWaNumbers();
+            renderWaNumbersTable();
+            showToast("Berhasil", "Status pengiriman nomor diperbarui", "success");
         };
 
-        window.closeModalTransferSaldoKePenjualan = function() {
-            document.getElementById('modalTransferSaldoKePenjualan').classList.add('hidden');
-        };
-
-        window.handleTransferSaldoKePenjualan = async function(e) {
+        window.handleAddWaNumber = async function(e) {
             e.preventDefault();
-            const nominal = parseFloat(document.getElementById('input_nominal_transfer_balik').value) || 0;
+            const name = document.getElementById('newWaLabel').value.trim();
+            let number = document.getElementById('newWaNumber').value.trim().replace(/[^0-9]/g, '');
 
-            if (nominal > window.saldoPembelianKhusus) {
-                showToast('Saldo Pembelian Tidak Cukup', 'Nominal transfer melebihi Sisa Saldo Khusus Pembelian saat ini!', 'error');
-                return;
-            }
+            if (number.startsWith('0')) number = '62' + number.slice(1);
 
-            try {
-                const newSaldoPembelian = window.saldoPembelianKhusus - nominal;
-                await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: newSaldoPembelian });
-                window.saldoPembelianKhusus = newSaldoPembelian;
+            window.waNumbersList.push({
+                id: Date.now().toString(),
+                name: name,
+                number: number,
+                active: true
+            });
 
-                closeModalTransferSaldoKePenjualan();
-                loadSaldoData();
-                showToast('Transfer Berhasil', `Saldo sebesar ${formatRupiah(nominal)} berhasil dipindahkan kembali ke Saldo Penjualan.`, 'success');
-            } catch (err) {
-                console.error(err);
-                showToast('Gagal Transfer', 'Terjadi kesalahan sistem saat memindahkan saldo.', 'error');
-            }
+            document.getElementById('newWaLabel').value = '';
+            document.getElementById('newWaNumber').value = '';
+
+            await saveWaNumbers();
+            renderWaNumbersTable();
+            showToast("Berhasil", "Nomor WhatsApp baru berhasil ditambahkan", "success");
         };
 
-        // INPUT DATA BARU & KIRIM PESAN WA SESUAI FORMAT TERUPDATE
+        window.deleteWaNumber = function(index) {
+            showCustomConfirm('Hapus Nomor WA', 'Apakah Anda yakin ingin menghapus nomor ini dari daftar?', async function() {
+                window.waNumbersList.splice(index, 1);
+                await saveWaNumbers();
+                renderWaNumbersTable();
+                showToast("Berhasil", "Nomor WA dihapus", "success");
+            });
+        };
+
+        // INPUT DATA BARU & KIRIM PESAN WA
         window.saveData = async function(e, type) {
             e.preventDefault();
             const form = e.target;
@@ -1051,7 +1114,6 @@
 
             const tanggal = formData.get('tanggal');
             const customFileName = `${identifierName}_${tanggal}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-
             const mediaFiles = form.querySelector('input[type="file"]').files;
             const submitBtn = form.querySelector('button[type="submit"]');
 
@@ -1122,13 +1184,12 @@
                 // PERHITUNGAN SALDO
                 let totalPenjualan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
                 let totalPembagian = window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
-                
                 let saldoGlobalBersih = totalPenjualan - totalPembagian - window.saldoPembelianKhusus;
                 let saldoGlobalKotor = saldoGlobalBersih + window.saldoPembelianKhusus;
 
                 let namaPenerima = identifierName || '';
 
-                // PESAN WHATSAPP OTOMATIS SESUAI INSTRUKSI PRESISI
+                // PESAN WA BERDASARKAN DUA ATURAN PENERIMA
                 let waMessage = '';
                 if (type === 'pembagian') {
                     waMessage = `> *Pesan Otomatis*\n\n` +
@@ -1144,13 +1205,11 @@
                     waMessage = `> *Pesan Otomatis*\n\n` +
                                 `*LAPORAN PENGELUARAN UANG LIMBAH*\n\n` +
                                 `Dikirim : Sistem Admin\n\n` +
-                                
                                 `• Tanggal : ${formatDateID(tanggal)}\n` +
                                 `• Nama Barang : ${namaPenerima}\n` +
                                 `• Total : ${formatRupiah(rawJumlah)}\n\n` +
                                 `Sisa saldo : ${formatRupiah(saldoGlobalKotor)}`;
                 } else {
-                    // PENJUALAN LIMBAH (Telah diperbaiki: Hilangkan baris Diterima)
                     waMessage = `> *Pesan Otomatis*\n\n` +
                                 `*LAPORAN PENJUALAN LIMBAH*\n\n` +
                                 `Dikirim : Sistem Admin\n\n` +
@@ -1160,7 +1219,8 @@
                                 `Sisa saldo : ${formatRupiah(saldoGlobalKotor)}`;
                 }
 
-                await sendWhatsAppNotification(waMessage, WA_TARGET_TRANSACTION);
+                // Kirim hanya ke nomor aktif (centang)
+                await sendWhatsAppNotification(waMessage);
 
             } catch (err) {
                 console.error(err);
@@ -1172,6 +1232,7 @@
         };
 
         window.loadAllDataFromFirebase = async function() {
+            await loadWaNumbers();
             for (const type of ['penjualan', 'pembelian', 'pembagian']) {
                 const querySnapshot = await getDocs(collection(db, type));
                 let list = [];
@@ -1182,11 +1243,8 @@
             
             try {
                 const saldoSnap = await getDoc(doc(db, "settings", "saldo_pembelian"));
-                if (saldoSnap.exists()) {
-                    window.saldoPembelianKhusus = saldoSnap.data().amount || 0;
-                } else {
-                    window.saldoPembelianKhusus = 0;
-                }
+                if (saldoSnap.exists()) window.saldoPembelianKhusus = saldoSnap.data().amount || 0;
+                else window.saldoPembelianKhusus = 0;
             } catch (err) {
                 window.saldoPembelianKhusus = 0;
             }
@@ -1438,7 +1496,7 @@
             container.innerHTML = html;
         };
 
-        // EKSPORT RIWAYAT SALDO KE PNG, PDF, DAN EXCEL
+        // EXPORT RIWAYAT SALDO & NOTA PERBAIKAN
         window.exportSaldoHistory = function(format) {
             const startDate = document.getElementById('start_saldo').value;
             const endDate = document.getElementById('end_saldo').value;
@@ -1560,7 +1618,6 @@
 
             const notaBoxContent = document.getElementById('notaBox').outerHTML;
             document.getElementById('notaPreviewWrapper').innerHTML = notaBoxContent;
-
             document.getElementById('notaPreviewModal').classList.remove('hidden');
         };
 
@@ -1568,6 +1625,7 @@
             document.getElementById('notaPreviewModal').classList.add('hidden');
         };
 
+        // PERBAIKAN FUNGSI EKSPOR NOTA (UNDUH TERSIMPAN FISIK)
         window.executeDownloadNota = function() {
             const { type, startDate } = window.currentNotaDownloadInfo;
             const selectedFormat = document.getElementById('downloadFormatSelect').value;
@@ -1579,14 +1637,41 @@
                 return;
             }
 
-            const notaBoxOriginal = document.getElementById('notaBox');
-            if (!notaBoxOriginal) {
-                showToast('Gagal', 'Data nota tidak ditemukan.', 'error');
+            const notaBoxTarget = document.getElementById('notaBox');
+            if (!notaBoxTarget) {
+                showToast('Gagal', 'Elemen nota tidak ditemukan.', 'error');
                 closeNotaPreviewModal();
                 return;
             }
 
-            closeNotaPreviewModal();
+            showToast('Memproses', 'Mengunduh nota...', 'info');
+
+            html2canvas(notaBoxTarget, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                
+                if (selectedFormat === 'png') {
+                    const link = document.createElement('a');
+                    link.href = imgData;
+                    link.download = `Nota_${type.toUpperCase()}_${startDate}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showToast('Berhasil', 'Nota PNG tersimpan!', 'success');
+                } else if (selectedFormat === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgWidth = 190;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                    pdf.save(`Nota_${type.toUpperCase()}_${startDate}.pdf`);
+                    showToast('Berhasil', 'Nota PDF tersimpan!', 'success');
+                }
+                closeNotaPreviewModal();
+            }).catch(err => {
+                console.error(err);
+                showToast('Gagal', 'Terjadi kesalahan saat mengeksport nota.', 'error');
+                closeNotaPreviewModal();
+            });
         };
 
         function exportNotaToExcel(type, startDate, data) {
