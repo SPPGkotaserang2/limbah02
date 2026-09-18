@@ -8,11 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.10/tailwindcss.min.js"></script>
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- html2canvas untuk Unduh Nota PNG -->
+    <!-- html2canvas & jsPDF & SheetJS untuk Export PNG, PDF, Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- jsPDF untuk Unduh Nota PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- SheetJS / xlsx untuk Unduh Nota Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -21,7 +19,16 @@
 </head>
 <body class="bg-gray-100 text-gray-800 min-h-screen flex flex-col">
 
-    <!-- NOTIFIKASI / TOAST PROFESIONAL -->
+    <!-- OVERLAY DETEKSI INTERNET (OFFLINE LOCK) -->
+    <div id="offlineOverlay" class="hidden fixed inset-0 bg-slate-900/95 z-[99999] flex flex-col items-center justify-center p-6 text-center text-white backdrop-blur-md">
+        <div class="w-20 h-20 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mb-4 text-4xl animate-pulse border border-red-500/30">
+            <i class="fa-solid fa-wifi-slash"></i>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">Koneksi Internet Terputus</h2>
+        <p class="text-sm text-gray-300 max-w-md">Aplikasi ini membutuhkan koneksi internet aktif untuk dapat digunakan. Hubungkan kembali perangkat Anda ke jaringan internet untuk membuka aplikasi.</p>
+    </div>
+
+    <!-- NOTIFIKASI TOAST -->
     <div id="toastNotification" class="fixed top-5 right-5 z-50 transform translate-y-[-200%] transition-all duration-300 max-w-sm w-full">
         <div id="toastBox" class="flex items-center p-4 rounded-2xl shadow-xl border bg-white">
             <div id="toastIcon" class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mr-3 text-lg"></div>
@@ -30,6 +37,62 @@
                 <p id="toastMessage" class="text-xs text-gray-500 mt-0.5"></p>
             </div>
             <button onclick="hideToast()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
+
+    <!-- MODAL ISI SALDO PEMBELIAN DARI SALDO GLOBAL -->
+    <div id="modalAddSaldoPembelian" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="text-base font-bold text-gray-900 flex items-center">
+                    <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-right-left"></i></span>
+                    Isi Saldo Khusus Pembelian
+                </h3>
+                <button onclick="closeModalAddSaldoPembelian()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleTransferSaldoPembelian(event)" class="space-y-4">
+                <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-800">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Uang akan dipindahkan dari <strong>Saldo Global Bersih (Penjualan)</strong> ke <strong>Saldo Khusus Pembelian</strong>.
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nominal Saldo (Rp)</label>
+                    <input type="number" id="input_nominal_transfer" required min="1" placeholder="Masukkan jumlah nominal" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeModalAddSaldoPembelian()" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl text-xs">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs shadow-md">
+                        Pindahkan Saldo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TRANSFER BALIK SALDO PEMBELIAN KE SALDO PENJUALAN (SALDO GLOBAL) -->
+    <div id="modalTransferSaldoKePenjualan" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="text-base font-bold text-gray-900 flex items-center">
+                    <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center mr-3 text-sm"><i class="fa-solid fa-arrow-right-arrow-left"></i></span>
+                    Transfer Saldo Pembelian ke Penjualan
+                </h3>
+                <button onclick="closeModalTransferSaldoKePenjualan()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleTransferSaldoKePenjualan(event)" class="space-y-4">
+                <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl text-xs text-emerald-800">
+                    <i class="fa-solid fa-circle-info mr-1"></i> Saldo akan dipindahkan dari <strong>Saldo Khusus Pembelian</strong> kembali ke <strong>Saldo Penjualan (Saldo Global Bersih)</strong>.
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nominal Transfer (Rp)</label>
+                    <input type="number" id="input_nominal_transfer_balik" required min="1" placeholder="Masukkan nominal transfer" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div class="flex justify-end space-x-3 pt-3">
+                    <button type="button" onclick="closeModalTransferSaldoKePenjualan()" class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl text-xs">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs shadow-md">
+                        Kembalikan Saldo
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -88,8 +151,16 @@
                 </div>
 
                 <div id="edit_field_tim" class="hidden">
-                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Nama Tim / Orang</label>
-                    <input type="text" id="edit_namaTim" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Diterima</label>
+                    <select id="edit_namaTim" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500">
+                        <option value="Sopiyan">Sopiyan</option>
+                        <option value="Nurhayati">Nurhayati</option>
+                        <option value="Anisa Hayatun Nufus">Anisa Hayatun Nufus</option>
+                        <option value="Herman Sawiran">Herman Sawiran</option>
+                        <option value="Fajar Rizki Ramadhan">Fajar Rizki Ramadhan</option>
+                        <option value="Suryati">Suryati</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
                 </div>
 
                 <div id="edit_field_orang" class="hidden">
@@ -327,12 +398,27 @@
                             <input type="date" name="tanggal" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Nama Tim / Orang</label>
-                            <input type="text" name="namaTim" required placeholder="Contoh: Tim Pengangkut" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Diterima</label>
+                            <select name="namaTim" id="pembagian_namaTim" required onchange="handleSelectTim(this)" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                                <option value="" disabled selected>-- Pilih Penerima --</option>
+                                <option value="Sopiyan">Sopiyan</option>
+                                <option value="Nurhayati">Nurhayati</option>
+                                <option value="Anisa Hayatun Nufus">Anisa Hayatun Nufus</option>
+                                <option value="Herman Sawiran">Herman Sawiran</option>
+                                <option value="Fajar Rizki Ramadhan">Fajar Rizki Ramadhan</option>
+                                <option value="Suryati">Suryati</option>
+                                <option value="Lainnya">Lainnya (Ketik Manual)</option>
+                            </select>
+                            <!-- Input manual jika memilih Lainnya -->
+                            <input type="text" name="namaTimCustom" id="pembagian_namaTimCustom" placeholder="Isi nama penerima bebas..." class="hidden mt-2 w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Nama Tim (Otomatis)</label>
+                            <input type="text" id="pembagian_namaTimOtomatisDisplay" readonly placeholder="Pilih penerima dulu..." class="w-full px-4 py-2.5 bg-gray-100 font-semibold text-gray-700 border border-gray-300 rounded-xl text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Jumlah Orang</label>
-                            <input type="number" name="jumlahOrang" required placeholder="Contoh: 5" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
+                            <input type="number" name="jumlahOrang" required placeholder="Contoh: 8" class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Jumlah Uang (Rp)</label>
@@ -373,31 +459,76 @@
                 </div>
             </div>
 
-            <!-- SALDO -->
+            <!-- SALDO & RIWAYAT -->
             <div id="content-saldo" class="tab-content hidden space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-6 text-white shadow-lg">
-                        <p class="text-xs uppercase tracking-wider text-emerald-100 font-semibold mb-1">Total Saldo Saat Ini</p>
-                        <h2 id="saldoTotalDisplay" class="text-3xl font-bold">Rp 0</h2>
+                <!-- PANEL FITUR SISA SALDO -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-5 text-white shadow-lg">
+                        <p class="text-xs uppercase tracking-wider text-emerald-100 font-semibold mb-1">Saldo Global Bersih</p>
+                        <h2 id="saldoGlobalDisplay" class="text-xl font-bold">Rp 0</h2>
+                        <p class="text-[10px] text-emerald-200 mt-2">Penjualan dikurangi Pembagian & Saldo Khusus Pembelian</p>
                     </div>
-                    <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                        <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Pemasukan</p>
-                        <h2 id="saldoPemasukanDisplay" class="text-2xl font-bold text-emerald-600">Rp 0</h2>
+
+                    <div class="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg">
+                        <p class="text-xs uppercase tracking-wider text-purple-100 font-semibold mb-1">Saldo Global Kotor</p>
+                        <h2 id="saldoGlobalKotorDisplay" class="text-xl font-bold">Rp 0</h2>
+                        <p class="text-[10px] text-purple-200 mt-2">Saldo Global Bersih + Saldo Khusus Pembelian</p>
                     </div>
-                    <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                        <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Pengeluaran</p>
-                        <h2 id="saldoPengeluaranDisplay" class="text-2xl font-bold text-red-600">Rp 0</h2>
+
+                    <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm relative overflow-hidden">
+                        <p class="text-xs uppercase tracking-wider text-amber-600 font-semibold mb-1">Saldo khusus Penjualan</p>
+                        <h2 id="saldoPemasukanDisplay" class="text-xl font-bold text-amber-600">Rp 0</h2>
+                        <p class="text-[10px] text-gray-400 mt-2">Total Seluruh Transaksi Penjualan Masuk</p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-1">
+                            <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold">Saldo khusus Pembelian</p>
+                            <div class="flex items-center gap-1">
+                                <button onclick="openModalAddSaldoPembelian()" title="Isi Saldo Khusus Pembelian dari Saldo Global" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-plus text-xs"></i> Isi
+                                </button>
+                                <button onclick="openModalTransferSaldoKePenjualan()" title="Transfer Saldo Pembelian ke Saldo Penjualan" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-arrow-right-arrow-left text-xs"></i> Ke Penjualan
+                                </button>
+                            </div>
+                        </div>
+                        <h2 id="saldoPembelianDisplay" class="text-xl font-bold text-blue-600">Rp 0</h2>
+                        <p class="text-[10px] text-gray-400 mt-2">Sisa Alokasi Kas Khusus Pembelian</p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+                        <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">Total Pembagian</p>
+                        <h2 id="saldoPengeluaranDisplay" class="text-xl font-bold text-red-600">Rp 0</h2>
+                        <p class="text-[10px] text-gray-400 mt-2">Total Seluruh Uang Pembagian Keluar</p>
                     </div>
                 </div>
+
+                <!-- RIWAYAT SALDO DENGAN EKSPORT PNG, PDF, EXCEL -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                        <h3 class="text-base font-bold text-gray-900"><i class="fa-solid fa-clock-rotate-left mr-2 text-emerald-600"></i>Riwayat Saldo</h3>
+                        <h3 class="text-base font-bold text-gray-900 flex items-center">
+                            <i class="fa-solid fa-clock-rotate-left mr-2 text-emerald-600"></i>Riwayat Saldo
+                        </h3>
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="text-xs text-gray-500 font-medium">Dari:</span>
                             <input type="date" id="start_saldo" onchange="loadSaldoData()" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs">
                             <span class="text-xs text-gray-500 font-medium">s/d:</span>
                             <input type="date" id="end_saldo" onchange="loadSaldoData()" class="px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs">
                             <button onclick="resetFilter('saldo')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-medium transition">Hari Ini</button>
+                            
+                            <!-- TOMBOL EKSPORT RIWAYAT SALDO -->
+                            <div class="flex items-center space-x-1 pl-2 border-l">
+                                <button onclick="exportSaldoHistory('png')" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold flex items-center">
+                                    <i class="fa-solid fa-file-image mr-1"></i> PNG
+                                </button>
+                                <button onclick="exportSaldoHistory('pdf')" class="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold flex items-center">
+                                    <i class="fa-solid fa-file-pdf mr-1"></i> PDF
+                                </button>
+                                <button onclick="exportSaldoHistory('excel')" class="px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-semibold flex items-center">
+                                    <i class="fa-solid fa-file-excel mr-1"></i> Excel
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div id="tableContainer_saldo" class="overflow-x-auto"></div>
@@ -433,9 +564,7 @@
                 <button onclick="closeNotaPreviewModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 flex items-center justify-center bg-gray-100 overflow-auto flex-1">
-                <div id="notaPreviewWrapper" class="transform scale-90 origin-top">
-                    <!-- Konten Nota yang ditampilkan secara visual -->
-                </div>
+                <div id="notaPreviewWrapper" class="transform scale-90 origin-top"></div>
             </div>
             <div class="p-4 bg-gray-50 border-t flex flex-col space-y-3">
                 <div class="flex items-center justify-between">
@@ -456,7 +585,7 @@
         </div>
     </div>
 
-    <!-- TEMPLATE NOTA REKAPITULASI HARIAN TERSEMBUNYI -->
+    <!-- TEMPLATE NOTA TERSEMBUNYI UNTUK GENERATE PNG/PDF -->
     <div id="notaContainer" class="fixed left-[-9999px] top-0 opacity-0 pointer-events-none z-[-999]">
         <div id="notaBox" class="bg-white w-[550px] p-8 text-gray-800 font-sans border border-gray-200 shadow-xl rounded-2xl">
             <div class="text-center border-b pb-4 mb-4">
@@ -468,13 +597,9 @@
             <div class="mb-6">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr id="notaTableHeadRow" class="border-b text-gray-500">
-                            <!-- Header dinamis diatur via script -->
-                        </tr>
+                        <tr id="notaTableHeadRow" class="border-b text-gray-500"></tr>
                     </thead>
-                    <tbody id="notaTableBody" class="divide-y divide-gray-100">
-                        <!-- Data dinamis rekap harian -->
-                    </tbody>
+                    <tbody id="notaTableBody" class="divide-y divide-gray-100"></tbody>
                 </table>
             </div>
             <div class="border-t pt-4 flex justify-between items-center text-sm font-bold text-emerald-800">
@@ -490,7 +615,7 @@
     <!-- SCRIPT FIREBASE & APLIKASI -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyB-4SHVseJrabUxIOCjup1KuNmxq22TJK4",
@@ -508,11 +633,38 @@
         const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzMpMNbZmS6682wqt4zCa_I0ATjjefLmNCMEbSjRarNpM2gyucyBAe6DneXj49ioUMMQ/exec';
         
         const WA_TOKEN = 'uJ8CF79nyQaJbPrVGeeE';
-        const WA_TARGET = '6283111399112';
+        // Target penerima WhatsApp utama
+        const WA_TARGET_PRIMARY = '6283111399112';
+        // Target penerima khusus transaksi (Penjualan, Pembelian, Pembagian)
+        const WA_TARGET_TRANSACTION = ['6283804346245', '6287785982118'];
 
         window.appData = { penjualan: [], pembelian: [], pembagian: [] };
+        window.saldoPembelianKhusus = 0; // Saldo khusus pembelian
         window.currentNotaDownloadInfo = { type: '', startDate: '' };
         window.currentMediaUrl = '';
+
+        // PEMETAAN TIM OTOMATIS BERDASARKAN PENERIMA (DITERIMA)
+        function getNamaTimAutomatic(diterimaName) {
+            if (diterimaName === 'Nurhayati') return 'Tim Persiapan';
+            if (diterimaName === 'Anisa Hayatun Nufus') return 'Tim Pemorsian/Packing';
+            if (diterimaName === 'Herman Sawiran') return 'Tim pencuci ompreng/foodtray';
+            if (diterimaName === 'Fajar Rizki Ramadhan') return 'Tim Distribusi,Aslap,admin sosmed';
+            if (diterimaName === 'Suryati') return 'Tim Scurity,Cleaning service, admin,internal';
+            if (diterimaName === 'Sopiyan') return 'Tim Masak';
+            return diterimaName || '-';
+        }
+
+        // DETEKSI KONEKSI INTERNET
+        function checkInternetConnection() {
+            const overlay = document.getElementById('offlineOverlay');
+            if (!navigator.onLine) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+        window.addEventListener('online', checkInternetConnection);
+        window.addEventListener('offline', checkInternetConnection);
 
         function getTodayDateString() {
             const today = new Date();
@@ -532,10 +684,11 @@
         }
 
         // FUNGSI NOTIFIKASI WHATSAPP
-        async function sendWhatsAppNotification(message) {
+        async function sendWhatsAppNotification(message, targetList = [WA_TARGET_PRIMARY]) {
             try {
+                const targetString = Array.isArray(targetList) ? targetList.join(',') : targetList;
                 const bodyData = new URLSearchParams();
-                bodyData.append('target', WA_TARGET);
+                bodyData.append('target', targetString);
                 bodyData.append('message', message);
                 bodyData.append('token', WA_TOKEN);
 
@@ -604,6 +757,7 @@
         };
 
         window.onload = function() {
+            checkInternetConnection();
             const todayStr = getTodayDateString();
             ['penjualan', 'pembelian', 'pembagian', 'saldo'].forEach(tab => {
                 const startEl = document.getElementById(`start_${tab}`);
@@ -654,8 +808,7 @@
                 showToast('Login Berhasil', `Selamat datang kembali (${role.toUpperCase()})`, 'success');
                 showApp();
 
-                // NOTIFIKASI WA LOGIN
-                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${user} (${role.toUpperCase()})* berhasil *MASUK (LOGIN)* ke dalam Sistem Manajemen Limbah pada ${new Date().toLocaleString('id-ID')}`);
+                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${user} (${role.toUpperCase()})* berhasil *MASUK (LOGIN)* ke dalam Sistem Manajemen Limbah pada ${new Date().toLocaleString('id-ID')}`, [WA_TARGET_PRIMARY]);
             } else {
                 document.getElementById('loginError').classList.remove('hidden');
                 showToast('Gagal Masuk', 'Username atau sandi yang Anda masukkan salah.', 'error');
@@ -672,13 +825,12 @@
                 document.getElementById('loginPage').classList.remove('hidden');
                 showToast('Berhasil Keluar', 'Anda telah keluar dari sesi aplikasi.', 'success');
 
-                // NOTIFIKASI WA LOGOUT
-                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${currentUser.toUpperCase()}* telah *KELUAR (LOGOUT)* dari Sistem Manajemen Limbah pada ${new Date().toLocaleString('id-ID')}`);
+                await sendWhatsAppNotification(`🔔 *PEMBERITAHUAN SISTEM DATA LIMBAH*\n\nAkun *${currentUser.toUpperCase()}* telah *KELUAR (LOGOUT)* dari Sistem Manajemen Limbah pada ${new Date().toLocaleString('id-ID')}`, [WA_TARGET_PRIMARY]);
             });
         };
 
         window.showApp = function() {
-            const role = localStorage.getItem('userRole') || 'user';
+            const role = localStorage.getItem('userRole') || 'User';
             const roleBadge = document.getElementById('userRoleBadge');
             
             if (role === 'admin') {
@@ -689,13 +841,9 @@
                 roleBadge.className = "text-xs font-medium bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200";
             }
 
-            // Sembunyikan tombol unduh nota jika role User
             ['penjualan', 'pembelian', 'pembagian'].forEach(tab => {
                 const btnNota = document.getElementById(`btnNota_${tab}`);
-                if (btnNota) {
-                    if (role === 'user') btnNota.classList.add('hidden');
-                    else btnNota.classList.remove('hidden');
-                }
+                if (btnNota) btnNota.classList.remove('hidden');
             });
 
             document.getElementById('loginPage').classList.add('hidden');
@@ -716,6 +864,21 @@
             if(tabName === 'saldo') loadSaldoData();
         };
 
+        window.handleSelectTim = function(selectEl) {
+            const customInput = document.getElementById('pembagian_namaTimCustom');
+            const timDisplay = document.getElementById('pembagian_namaTimOtomatisDisplay');
+
+            if (selectEl.value === 'Lainnya') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+                timDisplay.value = '-';
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+                timDisplay.value = getNamaTimAutomatic(selectEl.value);
+            }
+        };
+
         window.calculateTotal = function(type) {
             if (type === 'penjualan' || type === 'pembelian') {
                 const qty = parseFloat(document.getElementById(`banyaknya_${type}`).value) || 0;
@@ -728,7 +891,7 @@
         };
 
         function formatRupiah(angka) {
-            return 'Rp ' + angka.toLocaleString('id-ID');
+            return 'Rp ' + Number(angka || 0).toLocaleString('id-ID');
         }
 
         function compressImage(file, maxWidth = 1000, quality = 0.7) {
@@ -789,7 +952,77 @@
             if(clearBtn) clearBtn.classList.add('hidden');
         };
 
-        // INPUT DATA BARU & NOTIFIKASI WA
+        // FUNGSI TRANSAKSI DEPOSIT DARI SALDO GLOBAL KE SALDO PEMBELIAN
+        window.openModalAddSaldoPembelian = function() {
+            document.getElementById('input_nominal_transfer').value = '';
+            document.getElementById('modalAddSaldoPembelian').classList.remove('hidden');
+        };
+
+        window.closeModalAddSaldoPembelian = function() {
+            document.getElementById('modalAddSaldoPembelian').classList.add('hidden');
+        };
+
+        window.handleTransferSaldoPembelian = async function(e) {
+            e.preventDefault();
+            const nominal = parseFloat(document.getElementById('input_nominal_transfer').value) || 0;
+            
+            let totalPenjualan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            let totalPembagian = window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            let saldoGlobalBersih = totalPenjualan - totalPembagian - window.saldoPembelianKhusus;
+
+            if (nominal > saldoGlobalBersih) {
+                showToast('Saldo Tidak Cukup', 'Nominal transfer melebihi Sisa Saldo Global Bersih saat ini!', 'error');
+                return;
+            }
+
+            try {
+                const newSaldoPembelian = window.saldoPembelianKhusus + nominal;
+                await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: newSaldoPembelian });
+                window.saldoPembelianKhusus = newSaldoPembelian;
+                
+                closeModalAddSaldoPembelian();
+                loadSaldoData();
+                showToast('Saldo Berhasil Ditambah', `Saldo Khusus Pembelian bertambah ${formatRupiah(nominal)} dari Saldo Global Bersih.`, 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal Transfer', 'Terjadi kesalahan sistem.', 'error');
+            }
+        };
+
+        // FUNGSI TRANSFER BALIK SALDO KHUSUS PEMBELIAN KE SALDO PENJUALAN (SALDO GLOBAL BERSIH)
+        window.openModalTransferSaldoKePenjualan = function() {
+            document.getElementById('input_nominal_transfer_balik').value = '';
+            document.getElementById('modalTransferSaldoKePenjualan').classList.remove('hidden');
+        };
+
+        window.closeModalTransferSaldoKePenjualan = function() {
+            document.getElementById('modalTransferSaldoKePenjualan').classList.add('hidden');
+        };
+
+        window.handleTransferSaldoKePenjualan = async function(e) {
+            e.preventDefault();
+            const nominal = parseFloat(document.getElementById('input_nominal_transfer_balik').value) || 0;
+
+            if (nominal > window.saldoPembelianKhusus) {
+                showToast('Saldo Pembelian Tidak Cukup', 'Nominal transfer melebihi Sisa Saldo Khusus Pembelian saat ini!', 'error');
+                return;
+            }
+
+            try {
+                const newSaldoPembelian = window.saldoPembelianKhusus - nominal;
+                await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: newSaldoPembelian });
+                window.saldoPembelianKhusus = newSaldoPembelian;
+
+                closeModalTransferSaldoKePenjualan();
+                loadSaldoData();
+                showToast('Transfer Berhasil', `Saldo sebesar ${formatRupiah(nominal)} berhasil dipindahkan kembali ke Saldo Penjualan.`, 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal Transfer', 'Terjadi kesalahan sistem saat memindahkan saldo.', 'error');
+            }
+        };
+
+        // INPUT DATA BARU & KIRIM PESAN WA SESUAI FORMAT TERUPDATE
         window.saveData = async function(e, type) {
             e.preventDefault();
             const form = e.target;
@@ -797,12 +1030,23 @@
             
             let rawJumlah = 0;
             let identifierName = "";
+            let namaTimDidefinisikan = "";
+
             if (type === 'penjualan' || type === 'pembelian') {
                 rawJumlah = (parseFloat(formData.get('banyaknya')) || 0) * (parseFloat(formData.get('harga')) || 0);
                 identifierName = formData.get('namaBarang');
             } else {
                 rawJumlah = parseFloat(formData.get('jumlahUang')) || 0;
-                identifierName = formData.get('namaTim');
+                const selectTim = formData.get('namaTim');
+                identifierName = selectTim === 'Lainnya' ? formData.get('namaTimCustom') : selectTim;
+                namaTimDidefinisikan = getNamaTimAutomatic(identifierName);
+            }
+
+            if (type === 'pembelian') {
+                if (rawJumlah > window.saldoPembelianKhusus) {
+                    showToast('Saldo Pembelian Kurang', `Saldo khusus pembelian (${formatRupiah(window.saldoPembelianKhusus)}) tidak mencukupi untuk transaksi ${formatRupiah(rawJumlah)}. Silakan isi saldo dari Saldo Global dulu.`, 'error');
+                    return;
+                }
             }
 
             const tanggal = formData.get('tanggal');
@@ -847,7 +1091,8 @@
                     berat: formData.get('berat') || '-',
                     banyaknya: formData.get('banyaknya') ? parseFloat(formData.get('banyaknya')) : null,
                     harga: formData.get('harga') ? parseFloat(formData.get('harga')) : null,
-                    namaTim: formData.get('namaTim') || null,
+                    namaTim: identifierName || null,
+                    namaTimOtomatis: namaTimDidefinisikan || null,
                     jumlahOrang: formData.get('jumlahOrang') ? parseInt(formData.get('jumlahOrang')) : null,
                     jumlahUang: formData.get('jumlahUang') ? parseFloat(formData.get('jumlahUang')) : null,
                     rawJumlah: rawJumlah,
@@ -857,22 +1102,65 @@
                 };
 
                 await addDoc(collection(db, type), item);
+
+                if (type === 'pembelian') {
+                    window.saldoPembelianKhusus -= rawJumlah;
+                    await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: window.saldoPembelianKhusus });
+                }
+
                 form.reset();
                 clearSelectedImages(type);
                 document.getElementById(`jumlah_${type}`).value = '';
+                const customTimInput = document.getElementById('pembagian_namaTimCustom');
+                if (customTimInput) customTimInput.classList.add('hidden');
+                const timDisplay = document.getElementById('pembagian_namaTimOtomatisDisplay');
+                if (timDisplay) timDisplay.value = '';
+
                 await loadAllDataFromFirebase();
                 showToast('Berhasil Menyimpan', 'Data berhasil disimpan!', 'success');
 
-                // NOTIFIKASI WA INPUT BARANG
-                const role = localStorage.getItem('userRole') || 'User';
-                let waText = `📝 *INPUT DATA BARU (${type.toUpperCase()})*\n` +
-                             `Oleh: Akun ${role.toUpperCase()}\n\n` +
-                             `• Tanggal: ${formatDateID(tanggal)}\n` +
-                             (type !== 'pembagian' ? `• Nama Barang: ${identifierName}\n• Berat/Satuan: ${formData.get('berat') || '-'}\n• Banyaknya: ${formData.get('banyaknya')}\n• Harga: ${formatRupiah(parseFloat(formData.get('harga')))}\n` : `• Nama Tim: ${identifierName}\n• Jumlah Orang: ${formData.get('jumlahOrang')} Orang\n`) +
-                             `• Total: ${formatRupiah(rawJumlah)}\n\n` +
-                             `Diinput pada: ${new Date().toLocaleString('id-ID')}`;
+                // PERHITUNGAN SALDO
+                let totalPenjualan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+                let totalPembagian = window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
                 
-                await sendWhatsAppNotification(waText);
+                let saldoGlobalBersih = totalPenjualan - totalPembagian - window.saldoPembelianKhusus;
+                let saldoGlobalKotor = saldoGlobalBersih + window.saldoPembelianKhusus;
+
+                let namaPenerima = identifierName || '';
+
+                // PESAN WHATSAPP OTOMATIS SESUAI INSTRUKSI PRESISI
+                let waMessage = '';
+                if (type === 'pembagian') {
+                    waMessage = `> *Pesan Otomatis*\n\n` +
+                                `*LAPORAN PEMBAGIAN UANG LIMBAH*\n\n` +
+                                `Dikirim  : Sistem Admin\n` +
+                                `Diterima : ${namaPenerima}\n\n` +
+                                `• Tanggal : ${formatDateID(tanggal)}\n` +
+                                `• Nama Tim : ${namaTimDidefinisikan}\n` +
+                                `• Jumlah Orang : ${formData.get('jumlahOrang') || '-'}\n` +
+                                `• Total : ${formatRupiah(rawJumlah)}\n\n` +
+                                `Sisa saldo : ${formatRupiah(saldoGlobalKotor)}`;
+                } else if (type === 'pembelian') {
+                    waMessage = `> *Pesan Otomatis*\n\n` +
+                                `*LAPORAN PENGELUARAN UANG LIMBAH*\n\n` +
+                                `Dikirim : Sistem Admin\n\n` +
+                                
+                                `• Tanggal : ${formatDateID(tanggal)}\n` +
+                                `• Nama Barang : ${namaPenerima}\n` +
+                                `• Total : ${formatRupiah(rawJumlah)}\n\n` +
+                                `Sisa saldo : ${formatRupiah(saldoGlobalKotor)}`;
+                } else {
+                    // PENJUALAN LIMBAH (Telah diperbaiki: Hilangkan baris Diterima)
+                    waMessage = `> *Pesan Otomatis*\n\n` +
+                                `*LAPORAN PENJUALAN LIMBAH*\n\n` +
+                                `Dikirim : Sistem Admin\n\n` +
+                                `• Tanggal : ${formatDateID(tanggal)}\n` +
+                                `• Nama Barang : ${namaPenerima}\n` +
+                                `• Total : ${formatRupiah(rawJumlah)}\n\n` +
+                                `Sisa saldo : ${formatRupiah(saldoGlobalKotor)}`;
+                }
+
+                await sendWhatsAppNotification(waMessage, WA_TARGET_TRANSACTION);
 
             } catch (err) {
                 console.error(err);
@@ -891,6 +1179,18 @@
                 window.appData[type] = list;
                 loadTableData(type);
             }
+            
+            try {
+                const saldoSnap = await getDoc(doc(db, "settings", "saldo_pembelian"));
+                if (saldoSnap.exists()) {
+                    window.saldoPembelianKhusus = saldoSnap.data().amount || 0;
+                } else {
+                    window.saldoPembelianKhusus = 0;
+                }
+            } catch (err) {
+                window.saldoPembelianKhusus = 0;
+            }
+
             loadSaldoData();
         };
 
@@ -916,7 +1216,7 @@
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
                         <th class="p-3">Tanggal</th>
-                        ${type !== 'pembagian' ? '<th class="p-3">Nama Barang</th><th class="p-3">Berat/Satuan</th><th class="p-3">Qty</th><th class="p-3">Harga</th>' : '<th class="p-3">Nama Tim</th><th class="p-3">Jumlah Orang</th><th class="p-3">Jumlah Uang</th>'}
+                        ${type !== 'pembagian' ? '<th class="p-3">Nama Barang</th><th class="p-3">Berat/Satuan</th><th class="p-3">Qty</th><th class="p-3">Harga</th>' : '<th class="p-3">Diterima</th><th class="p-3">Nama Tim</th><th class="p-3">Jumlah Orang</th><th class="p-3">Jumlah Uang</th>'}
                         <th class="p-3">Total</th>
                         <th class="p-3 text-center">Foto Dokumentasi</th>
                         ${role === 'admin' ? '<th class="p-3 text-center">Aksi</th>' : ''}
@@ -933,7 +1233,8 @@
                              <td class="p-3">${item.banyaknya}</td>
                              <td class="p-3">${formatRupiah(parseFloat(item.harga))}</td>`;
                 } else {
-                    html += `<td class="p-3">${item.namaTim}</td>
+                    html += `<td class="p-3 font-semibold text-gray-800">${item.namaTim || '-'}</td>
+                             <td class="p-3 text-emerald-700 font-medium">${item.namaTimOtomatis || getNamaTimAutomatic(item.namaTim)}</td>
                              <td class="p-3 text-center">${item.jumlahOrang || '-'} Orang</td>
                              <td class="p-3">${formatRupiah(parseFloat(item.jumlahUang))}</td>`;
                 }
@@ -949,7 +1250,6 @@
                 }
                 html += `</div></td>`;
 
-                // HANYA ADMIN YANG DAPAT MELIHAT TOMBOL EDIT DAN HAPUS
                 if (role === 'admin') {
                     html += `<td class="p-3 text-center">
                                 <div class="flex items-center justify-center space-x-2">
@@ -965,7 +1265,6 @@
             container.innerHTML = html;
         };
 
-        // OPEN & HANDLE EDIT MODAL (KHUSUS ADMIN)
         window.openEditModal = function(type, id) {
             const role = localStorage.getItem('userRole');
             if (role !== 'admin') {
@@ -990,7 +1289,7 @@
                 document.getElementById('edit_field_orang').classList.remove('hidden');
                 document.getElementById('edit_field_uang').classList.remove('hidden');
 
-                document.getElementById('edit_namaTim').value = item.namaTim || '';
+                document.getElementById('edit_namaTim').value = item.namaTim || 'Sopiyan';
                 document.getElementById('edit_jumlahOrang').value = item.jumlahOrang || '';
                 document.getElementById('edit_jumlahUang').value = item.jumlahUang || '';
             } else {
@@ -1041,21 +1340,20 @@
             };
 
             let rawJumlah = 0;
-            let identifier = '';
 
             if (type === 'pembagian') {
-                updatedFields.namaTim = document.getElementById('edit_namaTim').value;
+                const penerimaName = document.getElementById('edit_namaTim').value;
+                updatedFields.namaTim = penerimaName;
+                updatedFields.namaTimOtomatis = getNamaTimAutomatic(penerimaName);
                 updatedFields.jumlahOrang = parseInt(document.getElementById('edit_jumlahOrang').value) || 0;
                 updatedFields.jumlahUang = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
                 rawJumlah = updatedFields.jumlahUang;
-                identifier = updatedFields.namaTim;
             } else {
                 updatedFields.namaBarang = document.getElementById('edit_namaBarang').value;
                 updatedFields.berat = document.getElementById('edit_berat').value;
                 updatedFields.banyaknya = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
                 updatedFields.harga = parseFloat(document.getElementById('edit_harga').value) || 0;
                 rawJumlah = updatedFields.banyaknya * updatedFields.harga;
-                identifier = updatedFields.namaBarang;
             }
             updatedFields.rawJumlah = rawJumlah;
 
@@ -1067,17 +1365,6 @@
                 closeEditModal();
                 await loadAllDataFromFirebase();
                 showToast('Berhasil Diubah', 'Data transaksi berhasil diperbarui.', 'success');
-
-                // NOTIFIKASI WA EDIT DATA
-                let waText = `✏️ *PERUBAHAN DATA (${type.toUpperCase()})*\n` +
-                             `Oleh: Admin (Serang)\n\n` +
-                             `• Tanggal: ${formatDateID(updatedFields.tanggal)}\n` +
-                             (type !== 'pembagian' ? `• Nama Barang: ${identifier}\n• Banyaknya: ${updatedFields.banyaknya}\n• Harga: ${formatRupiah(updatedFields.harga)}\n` : `• Nama Tim: ${identifier}\n• Jumlah Orang: ${updatedFields.jumlahOrang} Orang\n`) +
-                             `• Total Baru: ${formatRupiah(rawJumlah)}\n\n` +
-                             `Diubah pada: ${new Date().toLocaleString('id-ID')}`;
-
-                await sendWhatsAppNotification(waText);
-
             } catch (err) {
                 console.error(err);
                 showToast('Gagal Mengubah', 'Terjadi kesalahan saat memperbarui data.', 'error');
@@ -1102,12 +1389,16 @@
             }
 
             let totalPemasukan = allPenjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
-            let totalPengeluaran = allPembelian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0) + 
-                                   allPembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            let totalPembagian = allPembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
             
-            document.getElementById('saldoTotalDisplay').innerText = formatRupiah(totalPemasukan - totalPengeluaran);
+            let saldoGlobalBersih = totalPemasukan - totalPembagian - window.saldoPembelianKhusus;
+            let saldoGlobalKotor = saldoGlobalBersih + window.saldoPembelianKhusus;
+
+            document.getElementById('saldoGlobalDisplay').innerText = formatRupiah(saldoGlobalBersih);
+            document.getElementById('saldoGlobalKotorDisplay').innerText = formatRupiah(saldoGlobalKotor);
+            document.getElementById('saldoPembelianDisplay').innerText = formatRupiah(window.saldoPembelianKhusus);
             document.getElementById('saldoPemasukanDisplay').innerText = formatRupiah(totalPemasukan);
-            document.getElementById('saldoPengeluaranDisplay').innerText = formatRupiah(totalPengeluaran);
+            document.getElementById('saldoPengeluaranDisplay').innerText = formatRupiah(totalPembagian);
 
             let combined = [
                 ...allPenjualan.map(i => ({ ...i, category: 'Penjualan' })),
@@ -1123,7 +1414,7 @@
 
             combined.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
 
-            let html = `<table class="w-full text-left border-collapse text-sm">
+            let html = `<table id="tableSaldoElement" class="w-full text-left border-collapse text-sm bg-white">
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
                         <th class="p-3">Tanggal</th>
@@ -1135,7 +1426,7 @@
                 <tbody class="divide-y divide-gray-200">`;
 
             combined.forEach(item => {
-                const badgeColor = item.category === 'Penjualan' ? 'bg-emerald-100 text-emerald-700' : (item.category === 'Pembelian' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
+                const badgeColor = item.category === 'Penjualan' ? 'bg-emerald-100 text-emerald-700' : (item.category.includes('Pembelian') ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700');
                 html += `<tr class="hover:bg-gray-50">
                     <td class="p-3 font-medium">${formatDateID(item.tanggal)}</td>
                     <td class="p-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${badgeColor}">${item.category}</span></td>
@@ -1147,13 +1438,67 @@
             container.innerHTML = html;
         };
 
-        window.openNotaPreviewModal = function(type) {
-            const role = localStorage.getItem('userRole');
-            if (role !== 'admin') {
-                showToast('Akses Ditolak', 'User biasa tidak dapat mengunduh nota.', 'error');
+        // EKSPORT RIWAYAT SALDO KE PNG, PDF, DAN EXCEL
+        window.exportSaldoHistory = function(format) {
+            const startDate = document.getElementById('start_saldo').value;
+            const endDate = document.getElementById('end_saldo').value;
+            const tableEl = document.getElementById('tableSaldoElement');
+
+            if (!tableEl) {
+                showToast('Gagal Export', 'Tidak ada data saldo untuk dieksport.', 'error');
                 return;
             }
 
+            if (format === 'excel') {
+                let combined = [
+                    ...window.appData.penjualan.map(i => ({ ...i, category: 'Penjualan' })),
+                    ...window.appData.pembelian.map(i => ({ ...i, category: 'Pembelian' })),
+                    ...window.appData.pembagian.map(i => ({ ...i, category: 'Pembagian' }))
+                ];
+                if (startDate && endDate) {
+                    combined = combined.filter(item => item.tanggal >= startDate && item.tanggal <= endDate);
+                }
+                combined.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+                const excelData = combined.map(item => ({
+                    "Tanggal": formatDateID(item.tanggal),
+                    "Kategori": item.category,
+                    "Keterangan": item.namaBarang || item.namaTim || '-',
+                    "Jumlah Uang": item.rawJumlah
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(excelData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Saldo");
+                XLSX.writeFile(workbook, `Riwayat_Saldo_${startDate}_s.d_${endDate}.xlsx`);
+                showToast('Berhasil', 'Riwayat Saldo berhasil di-export ke Excel.', 'success');
+            } else if (format === 'png' || format === 'pdf') {
+                showToast('Memproses', 'Membuat file export...', 'info');
+                html2canvas(tableEl, { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    if (format === 'png') {
+                        const link = document.createElement('a');
+                        link.href = imgData;
+                        link.download = `Riwayat_Saldo_${startDate}_s.d_${endDate}.png`;
+                        link.click();
+                        showToast('Berhasil', 'Riwayat Saldo berhasil di-export ke PNG.', 'success');
+                    } else {
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const imgWidth = 190;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                        pdf.save(`Riwayat_Saldo_${startDate}_s.d_${endDate}.pdf`);
+                        showToast('Berhasil', 'Riwayat Saldo berhasil di-export ke PDF.', 'success');
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    showToast('Gagal', 'Gagal memproses gambar/PDF.', 'error');
+                });
+            }
+        };
+
+        window.openNotaPreviewModal = function(type) {
             const startDate = document.getElementById(`start_${type}`).value;
             const endDate = document.getElementById(`end_${type}`).value;
 
@@ -1170,7 +1515,7 @@
 
             window.currentNotaDownloadInfo = { type, startDate };
 
-            document.getElementById('notaHeaderTitle').innerText = `BUKTI TRANSAKSI ${type.toUpperCase()} `;
+            document.getElementById('notaHeaderTitle').innerText = `BUKTI TRANSAKSI ${type.toUpperCase()}`;
             document.getElementById('notaHeaderTanggal').innerText = `Tanggal: ${formatDateID(startDate)}`;
 
             let headRowHtml = '';
@@ -1179,13 +1524,13 @@
 
             if (type === 'pembagian') {
                 headRowHtml = `
-                    <th class="py-2">Nama</th>
+                    <th class="py-2">Diterima / Nama Tim</th>
                     <th class="py-2 text-center">Jumlah Orang</th>
                     <th class="py-2 text-right">Jumlah</th>
                 `;
                 data.forEach(item => {
                     tbodyHtml += `<tr>
-                        <td class="py-2 font-medium">${item.namaTim || '-'}</td>
+                        <td class="py-2 font-medium">${item.namaTim || '-'} (${item.namaTimOtomatis || getNamaTimAutomatic(item.namaTim)})</td>
                         <td class="py-2 text-center text-gray-500">${item.jumlahOrang || 0} Orang</td>
                         <td class="py-2 text-right font-semibold">${formatRupiah(item.rawJumlah)}</td>
                     </tr>`;
@@ -1242,162 +1587,32 @@
             }
 
             closeNotaPreviewModal();
-
-            const cloneBox = notaBoxOriginal.cloneNode(true);
-            cloneBox.style.position = 'fixed';
-            cloneBox.style.left = '-9999px';
-            cloneBox.style.top = '0px';
-            cloneBox.style.opacity = '1';
-            cloneBox.style.zIndex = '99999';
-            document.body.appendChild(cloneBox);
-
-            setTimeout(() => {
-                html2canvas(cloneBox, { 
-                    scale: 2, 
-                    useCORS: true, 
-                    logging: false,
-                    backgroundColor: '#ffffff' 
-                }).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-
-                    if (selectedFormat === 'png') {
-                        const link = document.createElement('a');
-                        link.href = imgData;
-                        link.download = `Nota_Rekap_${type}_${startDate}.png`;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        showToast('Berhasil', 'Nota PNG berhasil diunduh.', 'success');
-                    } else if (selectedFormat === 'pdf') {
-                        const { jsPDF } = window.jspdf;
-                        const pdf = new jsPDF('p', 'mm', 'a4');
-                        const imgWidth = 190;
-                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                        pdf.save(`Nota_Rekap_${type}_${startDate}.pdf`);
-                        showToast('Berhasil', 'Nota PDF berhasil diunduh.', 'success');
-                    }
-                    
-                    if (document.body.contains(cloneBox)) document.body.removeChild(cloneBox);
-                }).catch(err => {
-                    console.error(err);
-                    if (document.body.contains(cloneBox)) document.body.removeChild(cloneBox);
-                    showToast('Gagal', 'Gagal mengunduh nota.', 'error');
-                });
-            }, 100);
         };
 
         function exportNotaToExcel(type, startDate, data) {
             let excelData = [];
-            let total = 0;
-
             if (type === 'pembagian') {
-                excelData = data.map(item => {
-                    total += (item.rawJumlah || 0);
-                    return {
-                        "Tanggal": formatDateID(item.tanggal),
-                        "Nama Tim": item.namaTim || '-',
-                        "Jumlah Orang": (item.jumlahOrang || 0) + " Orang",
-                        "Jumlah Uang": item.rawJumlah || 0
-                    };
-                });
-                excelData.push({ "Tanggal": "", "Nama Tim": "TOTAL", "Jumlah Orang": "", "Jumlah Uang": total });
+                excelData = data.map(item => ({
+                    "Diterima": item.namaTim || '-',
+                    "Nama Tim": item.namaTimOtomatis || getNamaTimAutomatic(item.namaTim),
+                    "Jumlah Orang": item.jumlahOrang || 0,
+                    "Total Uang": item.rawJumlah
+                }));
             } else {
-                excelData = data.map(item => {
-                    total += (item.rawJumlah || 0);
-                    return {
-                        "Tanggal": formatDateID(item.tanggal),
-                        "Nama Barang": item.namaBarang || '-',
-                        "Berat/Satuan": item.berat || '-',
-                        "Banyaknya": item.banyaknya || 0,
-                        "Harga Satuan": item.harga || 0,
-                        "Jumlah Total": item.rawJumlah || 0
-                    };
-                });
-                excelData.push({ "Tanggal": "", "Nama Barang": "TOTAL", "Berat/Satuan": "", "Banyaknya": "", "Harga Satuan": "", "Jumlah Total": total });
+                excelData = data.map(item => ({
+                    "Banyaknya": item.banyaknya || 0,
+                    "Nama Barang": item.namaBarang || '-',
+                    "Berat / Satuan": item.berat || '-',
+                    "Harga Satuan": item.harga || 0,
+                    "Total Jumlah": item.rawJumlah
+                }));
             }
 
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, `Nota ${type}`);
-            XLSX.writeFile(workbook, `Nota_Rekap_${type}_${startDate}.xlsx`);
-            showToast('Berhasil', 'Nota Excel berhasil diunduh.', 'success');
-        }
-
-        window.downloadCurrentMediaImage = async function() {
-            if (!window.currentMediaUrl) return;
-            try {
-                showToast('Mengunduh', 'Sedang mengunduh gambar ke penyimpanan lokal...', 'info');
-                
-                const response = await fetch(window.currentMediaUrl);
-                const blob = await response.blob();
-                const blobUrl = URL.createObjectURL(blob);
-
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = `Dokumentasi_Limbah_${Date.now()}.jpg`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(blobUrl);
-
-                showToast('Berhasil', 'Gambar berhasil diunduh.', 'success');
-            } catch (e) {
-                console.error("Gagal unduh langsung, membuka fallback link:", e);
-                const fallbackLink = document.createElement('a');
-                fallbackLink.href = window.currentMediaUrl;
-                fallbackLink.target = '_blank';
-                fallbackLink.download = `Dokumentasi_Limbah_${Date.now()}.jpg`;
-                fallbackLink.click();
-            }
-        };
-
-        // HAPUS LANGSUNG TANPA KODE PIN KHUSUS ADMIN
-        window.confirmAdminDelete = function(type, id) {
-            const role = localStorage.getItem('userRole');
-            if (role !== 'admin') {
-                showToast('Akses Ditolak', 'User biasa tidak memiliki izin untuk menghapus data.', 'error');
-                return;
-            }
-
-            showCustomConfirm('Hapus Data Permanen', 'Apakah Anda yakin ingin menghapus data ini beserta foto dokumentasinya?', function() {
-                executeDeleteItem(type, id);
-            });
-        };
-
-        // HAPUS DATA & NOTIFIKASI WA
-        async function executeDeleteItem(type, id) {
-            try {
-                showToast('Memproses', 'Menghapus data dan file terkait di Sistem...', 'info');
-                
-                const itemData = window.appData[type].find(el => el.id === id);
-                
-                if (itemData && itemData.driveFileIds && itemData.driveFileIds.length > 0) {
-                    await fetch(APPS_SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'delete', fileIds: itemData.driveFileIds })
-                    });
-                }
-
-                await deleteDoc(doc(db, type, id));
-                await loadAllDataFromFirebase();
-                showToast('Berhasil Dihapus', 'Data dan foto terkait di Sistem berhasil dihapus.', 'success');
-
-                // NOTIFIKASI WA HAPUS DATA
-                let identifier = itemData ? (itemData.namaBarang || itemData.namaTim || '-') : '-';
-                let waText = `🗑️ *PENGHAPUSAN DATA (${type.toUpperCase()})*\n` +
-                             `Oleh: Admin (Serang)\n\n` +
-                             `• Tanggal Data: ${formatDateID(itemData ? itemData.tanggal : '')}\n` +
-                             `• Keterangan: ${identifier}\n` +
-                             `• Total: ${formatRupiah(itemData ? itemData.rawJumlah : 0)}\n\n` +
-                             `Dihapus pada: ${new Date().toLocaleString('id-ID')}`;
-
-                await sendWhatsAppNotification(waText);
-
-            } catch (err) {
-                console.error(err);
-                showToast('Gagal Menghapus', 'Terjadi kesalahan saat menghapus data.', 'error');
-            }
+            XLSX.utils.book_append_sheet(workbook, worksheet, `Nota_${type}`);
+            XLSX.writeFile(workbook, `Nota_${type.toUpperCase()}_${startDate}.xlsx`);
+            showToast('Berhasil', 'Nota berhasil di-export ke Excel.', 'success');
         }
 
         window.openMediaModal = function(url) {
@@ -1408,7 +1623,37 @@
 
         window.closeMediaModal = function() {
             document.getElementById('mediaModal').classList.add('hidden');
-            window.currentMediaUrl = '';
+        };
+
+        window.downloadCurrentMediaImage = function() {
+            if (!window.currentMediaUrl) return;
+            const a = document.createElement('a');
+            a.href = window.currentMediaUrl;
+            a.download = 'Dokumentasi_Limbah.jpg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        };
+
+        window.confirmAdminDelete = function(type, id) {
+            showCustomConfirm('Konfirmasi Hapus', 'Apakah Anda yakin ingin menghapus data ini beserta foto terkait?', async function() {
+                try {
+                    const item = window.appData[type].find(el => el.id === id);
+                    if (item && item.driveFileIds && item.driveFileIds.length > 0) {
+                        await fetch(APPS_SCRIPT_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({ action: 'delete', fileIds: item.driveFileIds })
+                        });
+                    }
+
+                    await deleteDoc(doc(db, type, id));
+                    await loadAllDataFromFirebase();
+                    showToast('Berhasil Dihapus', 'Data transaksi berhasil dihapus.', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showToast('Gagal Hapus', 'Terjadi kesalahan saat menghapus data.', 'error');
+                }
+            });
         };
     </script>
 </body>
