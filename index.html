@@ -1026,6 +1026,79 @@
             if(clearBtn) clearBtn.classList.add('hidden');
         };
 
+        // KELOLA MODAL TRANSFER / ISI SALDO PEMBELIAN
+        window.openModalAddSaldoPembelian = function() {
+            document.getElementById('input_nominal_transfer').value = '';
+            document.getElementById('modalAddSaldoPembelian').classList.remove('hidden');
+        };
+
+        window.closeModalAddSaldoPembelian = function() {
+            document.getElementById('modalAddSaldoPembelian').classList.add('hidden');
+        };
+
+        window.handleTransferSaldoPembelian = async function(e) {
+            e.preventDefault();
+            const nominal = parseFloat(document.getElementById('input_nominal_transfer').value) || 0;
+            if (nominal <= 0) {
+                showToast('Perhatian', 'Masukkan nominal saldo yang valid!', 'error');
+                return;
+            }
+
+            let totalPemasukan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            let totalPembagian = window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            let saldoGlobalBersih = totalPemasukan - totalPembagian - window.saldoPembelianKhusus;
+
+            if (nominal > saldoGlobalBersih) {
+                showToast('Saldo Tidak Cukup', `Saldo Global Bersih (${formatRupiah(saldoGlobalBersih)}) tidak mencukupi untuk dipindahkan sebesar ${formatRupiah(nominal)}.`, 'error');
+                return;
+            }
+
+            try {
+                window.saldoPembelianKhusus += nominal;
+                await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: window.saldoPembelianKhusus });
+                closeModalAddSaldoPembelian();
+                loadSaldoData();
+                showToast('Berhasil', `Berhasil memindahkan ${formatRupiah(nominal)} ke Saldo Khusus Pembelian.`, 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal', 'Terjadi kesalahan saat memindahkan saldo.', 'error');
+            }
+        };
+
+        window.openModalTransferSaldoKePenjualan = function() {
+            document.getElementById('input_nominal_transfer_balik').value = '';
+            document.getElementById('modalTransferSaldoKePenjualan').classList.remove('hidden');
+        };
+
+        window.closeModalTransferSaldoKePenjualan = function() {
+            document.getElementById('modalTransferSaldoKePenjualan').classList.add('hidden');
+        };
+
+        window.handleTransferSaldoKePenjualan = async function(e) {
+            e.preventDefault();
+            const nominal = parseFloat(document.getElementById('input_nominal_transfer_balik').value) || 0;
+            if (nominal <= 0) {
+                showToast('Perhatian', 'Masukkan nominal transfer yang valid!', 'error');
+                return;
+            }
+
+            if (nominal > window.saldoPembelianKhusus) {
+                showToast('Saldo Tidak Cukup', `Saldo Khusus Pembelian (${formatRupiah(window.saldoPembelianKhusus)}) tidak mencukupi untuk dikembalikan sebesar ${formatRupiah(nominal)}.`, 'error');
+                return;
+            }
+
+            try {
+                window.saldoPembelianKhusus -= nominal;
+                await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: window.saldoPembelianKhusus });
+                closeModalTransferSaldoKePenjualan();
+                loadSaldoData();
+                showToast('Berhasil', `Berhasil mengembalikan ${formatRupiah(nominal)} ke Saldo Penjualan (Global Bersih).`, 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal', 'Terjadi kesalahan saat mengembalikan saldo.', 'error');
+            }
+        };
+
         // KELOLA WA NUMBERS DI FIRESTORE
         async function loadWaNumbers() {
             try {
@@ -1381,6 +1454,33 @@
             });
             html += `</tbody></table>`;
             container.innerHTML = html;
+        };
+
+        window.confirmAdminDelete = function(type, id) {
+            const role = localStorage.getItem('userRole');
+            if (role !== 'admin') {
+                showToast('Akses Ditolak', 'Hanya admin yang dapat menghapus data.', 'error');
+                return;
+            }
+
+            showCustomConfirm('Konfirmasi Hapus', 'Apakah Anda yakin ingin menghapus data ini? Jika data Pembelian dihapus, saldo khusus pembelian akan dikembalikan.', async function() {
+                try {
+                    const targetItem = window.appData[type].find(el => el.id === id);
+                    await deleteDoc(doc(db, type, id));
+
+                    // JIKA DATA PEMBELIAN DIHAPUS, KEMBALIKAN SALDO PEMBELIAN
+                    if (type === 'pembelian' && targetItem && targetItem.rawJumlah) {
+                        window.saldoPembelianKhusus += targetItem.rawJumlah;
+                        await setDoc(doc(db, "settings", "saldo_pembelian"), { amount: window.saldoPembelianKhusus });
+                    }
+
+                    await loadAllDataFromFirebase();
+                    showToast('Berhasil Dihapus', 'Data transaksi berhasil dihapus.', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showToast('Gagal Menghapus', 'Terjadi kesalahan saat menghapus data.', 'error');
+                }
+            });
         };
 
         window.openEditModal = function(type, id) {
@@ -1776,33 +1876,13 @@
 
         window.downloadCurrentMediaImage = function() {
             if (!window.currentMediaUrl) return;
-            const a = document.createElement('a');
-            a.href = window.currentMediaUrl;
-            a.download = 'Dokumentasi_Limbah.jpg';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        };
-
-        window.confirmAdminDelete = function(type, id) {
-            showCustomConfirm('Konfirmasi Hapus', 'Apakah Anda yakin ingin menghapus data ini beserta foto terkait?', async function() {
-                try {
-                    const item = window.appData[type].find(el => el.id === id);
-                    if (item && item.driveFileIds && item.driveFileIds.length > 0) {
-                        await fetch(APPS_SCRIPT_URL, {
-                            method: 'POST',
-                            body: JSON.stringify({ action: 'delete', fileIds: item.driveFileIds })
-                        });
-                    }
-
-                    await deleteDoc(doc(db, type, id));
-                    await loadAllDataFromFirebase();
-                    showToast('Berhasil Dihapus', 'Data transaksi berhasil dihapus.', 'success');
-                } catch (err) {
-                    console.error(err);
-                    showToast('Gagal Hapus', 'Terjadi kesalahan saat menghapus data.', 'error');
-                }
-            });
+            const link = document.createElement('a');
+            link.href = window.currentMediaUrl;
+            link.download = 'Dokumentasi_Limbah.jpg';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         };
     </script>
 </body>
