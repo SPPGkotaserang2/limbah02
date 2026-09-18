@@ -619,16 +619,16 @@
         </div>
     </div>
 
-    <!-- MODAL PRATINJAU NOTA HARIAN -->
-    <div id="notaPreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div class="relative max-w-xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]">
+    <!-- MODAL PRATINJAU NOTA HARIAN (DIPERBAIKI: RESPONSIF & FULL TIDAK TERPOTONG) -->
+    <div id="notaPreviewModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="relative max-w-2xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] my-auto">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
-                <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-file-lines mr-2 text-emerald-600"></i>Pratinjau Nota (Mode Desktop Dipaksa)</h3>
+                <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-file-lines mr-2 text-emerald-600"></i>Pratinjau Nota</h3>
                 <button onclick="closeNotaPreviewModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            <!-- Wrapper dengan pembungkus overflow dan min-width untuk memaksa tampilan desktop -->
-            <div class="p-6 flex items-center justify-center bg-gray-100 overflow-auto flex-1">
-                <div id="notaPreviewWrapper" class="w-full flex justify-center min-w-[750px]"></div>
+            <!-- Wrapper pratinjau responsif -->
+            <div class="p-4 sm:p-6 flex items-center justify-center bg-gray-100 overflow-y-auto flex-1">
+                <div id="notaPreviewWrapper" class="w-full flex justify-center"></div>
             </div>
             <div class="p-4 bg-gray-50 border-t flex flex-col space-y-3">
                 <div class="flex items-center justify-between">
@@ -647,7 +647,7 @@
         </div>
     </div>
 
-    <!-- TEMPLATE NOTA TERSEMBUNYI (Lebar Tetap Desktop 750px) -->
+    <!-- TEMPLATE NOTA TERSEMBUNYI (Lebar Tetap Desktop 750px untuk Hasil Download) -->
     <div id="notaContainer" class="fixed left-[-9999px] top-0 pointer-events-none z-[-999]">
         <div id="notaBox" class="bg-white w-[750px] p-8 text-gray-800 font-sans border border-gray-200 shadow-xl rounded-2xl">
             <div class="text-center border-b pb-4 mb-4">
@@ -1611,14 +1611,17 @@
 
             document.getElementById('notaHeaderTotal').innerText = formatRupiah(totalSum);
 
-            // Menampilkan salinan kloning nota ke pratinjau dengan gaya terpaksa desktop
+            // Menampilkan salinan kloning nota ke pratinjau dengan lebar yang responsif dan pas di layar
             const previewWrapper = document.getElementById('notaPreviewWrapper');
             const notaBoxEl = document.getElementById('notaBox');
             previewWrapper.innerHTML = '';
             let clone = notaBoxEl.cloneNode(true);
+            clone.id = 'notaBoxPreviewClone';
             clone.style.position = 'static';
             clone.style.left = 'auto';
             clone.style.display = 'block';
+            clone.classList.remove('w-[750px]');
+            clone.classList.add('w-full', 'max-w-[750px]', 'mx-auto');
             previewWrapper.appendChild(clone);
 
             document.getElementById('notaPreviewModal').classList.remove('hidden');
@@ -1657,9 +1660,8 @@
             }
 
             try {
-                showToast('Memproses', 'Sedang merender nota desktop...', 'info');
+                showToast('Memproses', 'Sedang merender nota...', 'info');
                 
-                // Konfigurasi html2canvas dengan skala tinggi untuk hasil tajam pada mode desktop
                 const canvas = await html2canvas(notaElement, { 
                     scale: 2, 
                     useCORS: true,
@@ -1709,23 +1711,50 @@
                 return;
             }
 
+            combinedLogs.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
             if (format === 'excel') {
                 let excelData = combinedLogs.map(item => ({
-                    Tanggal : item.tanggal,
+                    Tanggal: item.tanggal,
                     Kategori: item.logType,
-                    'Keterangan / Nama': item.namaBarang || item.namaTim || '-',
+                    Keterangan: item.namaBarang || item.namaTim || '-',
                     Nominal: item.rawJumlah
                 }));
                 const worksheet = XLSX.utils.json_to_sheet(excelData);
                 const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat Saldo");
-                XLSX.writeFile(workbook, `Riwayat_Saldo_${startDate}_to_${endDate}.xlsx`);
-                showToast('Berhasil', 'Riwayat Saldo Excel berhasil diunduh.', 'success');
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Riwayat_Saldo");
+                XLSX.writeFile(workbook, `Riwayat_Saldo_${startDate}_sd_${endDate}.xlsx`);
+                showToast('Berhasil', 'File Excel riwayat saldo berhasil diunduh.', 'success');
                 return;
             }
 
-            // Untuk ekspor PNG/PDF Riwayat Saldo
-            showToast('Fitur Export', 'Gunakan menu Cetak Nota per Hari untuk dokumen cetak formal.', 'info');
+            const container = document.getElementById('tableContainer_saldo');
+            try {
+                showToast('Memproses', 'Sedang memproses ekspor riwayat saldo...', 'info');
+                const canvas = await html2canvas(container, { scale: 2, useCORS: true });
+                const imgData = canvas.toDataURL('image/png');
+
+                if (format === 'png') {
+                    const link = document.createElement('a');
+                    link.download = `Riwayat_Saldo_${startDate}_sd_${endDate}.png`;
+                    link.href = imgData;
+                    link.click();
+                    showToast('Berhasil', 'Gambar PNG berhasil diunduh.', 'success');
+                } else if (format === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgProps = pdf.getImageProperties(imgData);
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+                    pdf.save(`Riwayat_Saldo_${startDate}_sd_${endDate}.pdf`);
+                    showToast('Berhasil', 'Dokumen PDF berhasil diunduh.', 'success');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal', 'Terjadi kesalahan saat mengekspor riwayat saldo.', 'error');
+            }
         };
 
         window.openMediaModal = function(url) {
@@ -1738,28 +1767,19 @@
             document.getElementById('mediaModal').classList.add('hidden');
         };
 
-        window.downloadCurrentMediaImage = async function() {
+        window.downloadCurrentMediaImage = function() {
             if (!window.currentMediaUrl) return;
-            try {
-                const response = await fetch(window.currentMediaUrl);
-                const blob = await response.blob();
-                const blobUrl = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = blobUrl;
-                link.download = `Dokumentasi_${Date.now()}.jpg`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showToast('Berhasil', 'Gambar berhasil diunduh.', 'success');
-            } catch (err) {
-                window.open(window.currentMediaUrl, '_blank');
-            }
+            const a = document.createElement('a');
+            a.href = window.currentMediaUrl;
+            a.download = 'dokumentasi.jpg';
+            a.target = '_blank';
+            a.click();
         };
 
         window.openEditModal = function(type, item) {
             document.getElementById('edit_type').value = type;
             document.getElementById('edit_id').value = item.id;
-            document.getElementById('edit_tanggal').value = item.tanggal;
+            document.getElementById('edit_tanggal').value = item.tanggal || '';
 
             const fieldBarang = document.getElementById('edit_field_barang');
             const fieldBerat = document.getElementById('edit_field_berat');
@@ -1782,7 +1802,6 @@
                 document.getElementById('edit_berat').value = item.berat || '';
                 document.getElementById('edit_banyaknya').value = item.banyaknya || '';
                 document.getElementById('edit_harga').value = item.harga || '';
-                document.getElementById('edit_jumlah_display').value = formatRupiah(item.rawJumlah);
             } else {
                 fieldBarang.classList.add('hidden');
                 fieldBerat.classList.add('hidden');
@@ -1792,12 +1811,11 @@
                 fieldOrang.classList.remove('hidden');
                 fieldUang.classList.remove('hidden');
 
-                document.getElementById('edit_namaTim').value = item.namaTim || 'Sopiyan';
+                document.getElementById('edit_namaTim').value = item.namaTim || 'Lainnya';
                 document.getElementById('edit_jumlahOrang').value = item.jumlahOrang || '';
                 document.getElementById('edit_jumlahUang').value = item.jumlahUang || '';
-                document.getElementById('edit_jumlah_display').value = formatRupiah(item.rawJumlah);
             }
-
+            calculateEditTotal();
             document.getElementById('editModal').classList.remove('hidden');
         };
 
@@ -1807,51 +1825,48 @@
 
         window.calculateEditTotal = function() {
             const type = document.getElementById('edit_type').value;
+            let total = 0;
             if (type !== 'pembagian') {
                 const qty = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
-                const harga = parseFloat(document.getElementById('edit_harga').value) || 0;
-                document.getElementById('edit_jumlah_display').value = formatRupiah(qty * harga);
+                const hg = parseFloat(document.getElementById('edit_harga').value) || 0;
+                total = qty * hg;
             } else {
-                const uang = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
-                document.getElementById('edit_jumlah_display').value = formatRupiah(uang);
+                total = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
             }
+            document.getElementById('edit_jumlah_display').value = formatRupiah(total);
         };
 
         window.handleUpdateData = async function(e) {
             e.preventDefault();
             const type = document.getElementById('edit_type').value;
             const id = document.getElementById('edit_id').value;
-            const tanggal = document.getElementById('edit_tanggal').value;
+            const submitBtn = document.getElementById('editSubmitBtn');
 
-            let updatedData = { tanggal: tanggal };
-            let rawJumlah = 0;
+            let updatedData = {
+                tanggal: document.getElementById('edit_tanggal').value
+            };
 
             if (type !== 'pembagian') {
-                const namaBarang = document.getElementById('edit_namaBarang').value;
-                const berat = document.getElementById('edit_berat').value;
-                const banyaknya = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
-                const harga = parseFloat(document.getElementById('edit_harga').value) || 0;
-                rawJumlah = banyaknya * harga;
-
-                updatedData.namaBarang = namaBarang;
-                updatedData.berat = berat;
-                updatedData.banyaknya = banyaknya;
-                updatedData.harga = harga;
-                updatedData.rawJumlah = rawJumlah;
+                const qty = parseFloat(document.getElementById('edit_banyaknya').value) || 0;
+                const hg = parseFloat(document.getElementById('edit_harga').value) || 0;
+                updatedData.namaBarang = document.getElementById('edit_namaBarang').value;
+                updatedData.berat = document.getElementById('edit_berat').value;
+                updatedData.banyaknya = qty;
+                updatedData.harga = hg;
+                updatedData.rawJumlah = qty * hg;
             } else {
-                const namaTim = document.getElementById('edit_namaTim').value;
-                const jumlahOrang = parseInt(document.getElementById('edit_jumlahOrang').value) || 0;
-                const jumlahUang = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
-                rawJumlah = jumlahUang;
-
-                updatedData.namaTim = namaTim;
-                updatedData.namaTimOtomatis = getNamaTimAutomatic(namaTim);
-                updatedData.jumlahOrang = jumlahOrang;
-                updatedData.jumlahUang = jumlahUang;
-                updatedData.rawJumlah = rawJumlah;
+                const tim = document.getElementById('edit_namaTim').value;
+                const uang = parseFloat(document.getElementById('edit_jumlahUang').value) || 0;
+                updatedData.namaTim = tim;
+                updatedData.namaTimOtomatis = getNamaTimAutomatic(tim);
+                updatedData.jumlahOrang = parseInt(document.getElementById('edit_jumlahOrang').value) || 0;
+                updatedData.jumlahUang = uang;
+                updatedData.rawJumlah = uang;
             }
 
             try {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Menyimpan...';
                 await updateDoc(doc(db, type, id), updatedData);
                 closeEditModal();
                 await loadAllDataFromFirebase();
@@ -1859,15 +1874,18 @@
             } catch (err) {
                 console.error(err);
                 showToast('Gagal', 'Terjadi kesalahan saat memperbarui data.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1.5"></i>Simpan Perubahan`;
             }
         };
 
         window.deleteData = function(type, id) {
-            showCustomConfirm('Hapus Data', 'Apakah Anda yakin ingin menghapus data transaksi ini?', async function() {
+            showCustomConfirm('Hapus Transaksi', 'Apakah Anda yakin ingin menghapus data ini?', async function() {
                 try {
                     await deleteDoc(doc(db, type, id));
                     await loadAllDataFromFirebase();
-                    showToast('Berhasil', 'Data berhasil dihapus.', 'success');
+                    showToast('Berhasil', 'Data transaksi berhasil dihapus.', 'success');
                 } catch (err) {
                     console.error(err);
                     showToast('Gagal', 'Terjadi kesalahan saat menghapus data.', 'error');
