@@ -692,7 +692,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzMpMNbZmS6682wqt4zCa_I0ATjjefLmNCMEbSjRarNpM2gyucyBAe6DneXj49ioUMMQ/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwHg5ZoO1X9RRixEfRSXTQsSwqiXKoMspJz4C4F4Lp6nFPQZIK8SoJkcfihhc3iEQxV0w/exec';
         const WA_TOKEN = 'uJ8CF79nyQaJbPrVGeeE';
         const WA_TARGET_PRIMARY = '6283111399112';
 
@@ -1779,7 +1779,6 @@
             try {
                 showToast('Mengunduh', 'Proses unduh foto sedang berjalan...', 'info');
                 
-                // Gunakan fetch blob untuk mengunduh gambar langsung secara otomatis tersimpan
                 const response = await fetch(window.currentMediaUrl);
                 const blob = await response.blob();
                 const blobUrl = URL.createObjectURL(blob);
@@ -1795,7 +1794,6 @@
                 showToast('Berhasil', 'Foto dokumentasi berhasil diunduh & tersimpan!', 'success');
             } catch (err) {
                 console.error("Gagal unduh langsung, fallback ke tab baru/link direct:", err);
-                // Fallback jika CORS memblokir fetch blob
                 const link = document.createElement('a');
                 link.href = window.currentMediaUrl;
                 link.download = `Dokumentasi_Foto_${Date.now()}.jpg`;
