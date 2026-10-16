@@ -29,7 +29,7 @@
     </div>
 
     <!-- NOTIFIKASI TOAST -->
-    <div id="toastNotification" class="fixed top-5 right-5 z-50 transform translate-y-[-200%] transition-all duration-300 max-w-sm w-full">
+    <div id="toastNotification" class="fixed top-5 right-5 z-[100000] transform translate-y-[-200%] transition-all duration-300 max-w-sm w-full">
         <div id="toastBox" class="flex items-center p-4 rounded-2xl shadow-xl border bg-white">
             <div id="toastIcon" class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center mr-3 text-lg"></div>
             <div class="flex-1 mr-2">
@@ -175,15 +175,29 @@
     </div>
 
     <!-- HALAMAN LOGIN -->
-    <div id="loginPage" class="fixed inset-0 bg-gradient-to-br from-emerald-700 to-teal-900 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all">
-            <div class="text-center mb-8">
+    <div id="loginPage" class="fixed inset-0 bg-gradient-to-br from-emerald-700 to-teal-900 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all my-auto">
+            <div class="text-center mb-6">
                 <div class="inline-flex items-center justify-center w-20 h-20 bg-emerald-50 rounded-full mb-4 shadow-inner overflow-hidden border border-emerald-100">
                     <img src="logo.png" alt="Logo Lokal" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='https://via.placeholder.com/80?text=LOGO';">
                 </div>
                 <h1 class="text-2xl font-bold text-gray-900">Sistem Manajemen Limbah</h1>
-                <p class="text-sm text-gray-500 mt-1">Silakan masuk untuk melanjutkan</p>
+                <p class="text-sm text-gray-500 mt-1">Silakan masuk atau lihat data secara publik</p>
             </div>
+            
+            <!-- TOMBOL FITUR LIHAT DATA (KHUSUS SEBELUM LOGIN / HANYA LIHAT TANPA EDITOR) -->
+            <div class="mb-6">
+                <button type="button" onclick="openPublicViewerModal()" class="w-full py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-xl border border-blue-200 transition-all text-sm flex items-center justify-center shadow-sm">
+                    <i class="fa-solid fa-eye mr-2 text-base"></i> Lihat Data
+                </button>
+            </div>
+
+            <div class="relative flex py-2 items-center mb-6">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink mx-4 text-gray-400 text-xs uppercase tracking-wider font-semibold">Atau Masuk Sistem</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
             <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
                 <div>
                     <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Username</label>
@@ -204,6 +218,84 @@
                     Masuk Sistem
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL LIHAT DATA (PUBLIC VIEWER - HANYA LIHAT, TANPA EDITOR/HAPUS) -->
+    <div id="publicViewerModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[90000] p-4 overflow-y-auto">
+        <div class="relative max-w-6xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] my-auto">
+            <div class="p-5 bg-gradient-to-r from-blue-700 to-indigo-800 text-white flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-base">Portal Lihat Data</h3>
+                        <p class="text-xs text-blue-100">Anda dapat melihat rekapitulasi data dan mengunduh nota/gambar.</p>
+                    </div>
+                </div>
+                <button onclick="closePublicViewerModal()" class="text-white/80 hover:text-white text-xl p-2"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="p-4 sm:p-6 bg-gray-50 border-b flex flex-wrap items-center justify-between gap-3">
+                <div class="flex space-x-2 overflow-x-auto pb-1">
+                    <button onclick="switchPublicTab('penjualan')" id="pubTabBtn-penjualan" class="pub-tab-btn px-4 py-2 rounded-xl font-semibold text-xs transition-all bg-blue-600 text-white shadow flex items-center space-x-1.5">
+                        <i class="fa-solid fa-cash-register"></i><span>Penjualan</span>
+                    </button>
+                    <button onclick="switchPublicTab('pembelian')" id="pubTabBtn-pembelian" class="pub-tab-btn px-4 py-2 rounded-xl font-semibold text-xs transition-all bg-white text-gray-600 hover:bg-gray-100 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-cart-shopping"></i><span>Pembelian</span>
+                    </button>
+                    <button onclick="switchPublicTab('pembagian')" id="pubTabBtn-pembagian" class="pub-tab-btn px-4 py-2 rounded-xl font-semibold text-xs transition-all bg-white text-gray-600 hover:bg-gray-100 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-hand-holding-dollar"></i><span>Pembagian</span>
+                    </button>
+                    <button onclick="switchPublicTab('saldo')" id="pubTabBtn-saldo" class="pub-tab-btn px-4 py-2 rounded-xl font-semibold text-xs transition-all bg-white text-gray-600 hover:bg-gray-100 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-wallet"></i><span>Saldo & Riwayat</span>
+                    </button>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs text-gray-500 font-medium">Dari:</span>
+                    <input type="date" id="pub_start_date" onchange="loadPublicTableData()" class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs">
+                    <span class="text-xs text-gray-500 font-medium">s/d:</span>
+                    <input type="date" id="pub_end_date" onchange="loadPublicTableData()" class="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-xs">
+                    <button onclick="resetPublicFilter()" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-xs font-medium transition">Hari Ini</button>
+                    <button id="pubBtnNota" onclick="openPublicNotaPreview()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow flex items-center"><i class="fa-solid fa-file-arrow-down mr-1"></i> Unduh Nota</button>
+                </div>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 bg-white">
+                <!-- KONTEN SALDO PUBLIK -->
+                <div id="pub-content-saldo" class="pub-tab-content hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-4 text-white shadow">
+                            <p class="text-[11px] uppercase tracking-wider text-emerald-100 font-semibold mb-1">UANG DI PAK JIMI KURNIAWAN</p>
+                            <h2 id="pub_saldoGlobalDisplay" class="text-lg font-bold">Rp 0</h2>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                            <p class="text-[11px] uppercase tracking-wider text-amber-600 font-semibold mb-1">Total Pemasukan</p>
+                            <h2 id="pub_saldoPemasukanDisplay" class="text-lg font-bold text-amber-600">Rp 0</h2>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                            <p class="text-[11px] uppercase tracking-wider text-blue-600 font-semibold mb-1">Uang Di Pak Aslap</p>
+                            <h2 id="pub_saldoPembelianDisplay" class="text-lg font-bold text-blue-600">Rp 0</h2>
+                        </div>
+                        <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
+                            <p class="text-[11px] uppercase tracking-wider text-red-600 font-semibold mb-1">Total Pembagian</p>
+                            <h2 id="pub_saldoPengeluaranDisplay" class="text-lg font-bold text-red-600">Rp 0</h2>
+                        </div>
+                    </div>
+                    <div id="pubTableContainer_saldo" class="overflow-x-auto"></div>
+                </div>
+
+                <!-- KONTEN TABEL DATA PUBLIK (PENJUALAN, PEMBELIAN, PEMBAGIAN) -->
+                <div id="pub-content-table" class="pub-tab-content">
+                    <div id="pubTableContainer" class="overflow-x-auto"></div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-100 border-t flex justify-end">
+                <button onclick="closePublicViewerModal()" class="px-5 py-2.5 bg-gray-700 hover:bg-gray-800 text-white font-semibold rounded-xl text-xs shadow">Tutup Portal</button>
+            </div>
         </div>
     </div>
 
@@ -603,8 +695,8 @@
         </div>
     </div>
 
-    <!-- MODAL MEDIA VIEWER (DISEMPURNAKAN UNTUK PRATINJAU LANGSUNG DI WEB) -->
-    <div id="mediaModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[99999] p-4">
+    <!-- MODAL MEDIA VIEWER -->
+    <div id="mediaModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[100000] p-4">
         <div class="relative max-w-4xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <div class="p-4 bg-gray-50 border-b flex justify-between items-center">
                 <h3 class="font-bold text-gray-800 text-sm"><i class="fa-solid fa-image mr-2 text-emerald-600"></i>Pratinjau Foto Dokumentasi</h3>
@@ -706,6 +798,7 @@
         window.saldoPembelianKhusus = 0;
         window.currentNotaDownloadInfo = { type: '', startDate: '', endDate: '' };
         window.currentMediaUrl = '';
+        window.currentPublicTab = 'penjualan';
 
         function getNamaTimAutomatic(diterimaName) {
             if (diterimaName === 'Nurhayati') return 'Tim Persiapan';
@@ -830,12 +923,15 @@
         window.onload = function() {
             checkInternetConnection();
             const todayStr = getTodayDateString();
-            ['penjualan', 'pembelian', 'pembagian', 'saldo'].forEach(tab => {
-                const startEl = document.getElementById(`start_${tab}`);
-                const endEl = document.getElementById(`end_${tab}`);
+            ['penjualan', 'pembelian', 'pembagian', 'saldo', 'pub'].forEach(tab => {
+                const startEl = document.getElementById(tab === 'pub' ? 'pub_start_date' : `start_${tab}`);
+                const endEl = document.getElementById(tab === 'pub' ? 'pub_end_date' : `end_${tab}`);
                 if(startEl) startEl.value = todayStr;
                 if(endEl) endEl.value = todayStr;
             });
+
+            // Tarik data dasar untuk keperluan viewer publik saat halaman dibuka
+            fetchAllDataSilent();
 
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
             const loginTime = parseInt(localStorage.getItem('loginTime') || '0', 10);
@@ -852,12 +948,228 @@
             }
         };
 
+        async function fetchAllDataSilent() {
+            try {
+                await loadWaNumbers();
+                for (const type of ['penjualan', 'pembelian', 'pembagian']) {
+                    const querySnapshot = await getDocs(collection(db, type));
+                    let list = [];
+                    querySnapshot.forEach((docSnap) => list.push({ id: docSnap.id, ...docSnap.data() }));
+                    window.appData[type] = list;
+                }
+                const saldoSnap = await getDoc(doc(db, "settings", "saldo_pembelian"));
+                if (saldoSnap.exists()) window.saldoPembelianKhusus = saldoSnap.data().amount || 0;
+                else window.saldoPembelianKhusus = 0;
+            } catch (e) {
+                console.error("Silent fetch error:", e);
+            }
+        }
+
         window.resetFilter = function(tab) {
             const todayStr = getTodayDateString();
             document.getElementById(`start_${tab}`).value = todayStr;
             document.getElementById(`end_${tab}`).value = todayStr;
             if(tab === 'saldo') loadSaldoData();
             else loadTableData(tab);
+        };
+
+        window.resetPublicFilter = function() {
+            const todayStr = getTodayDateString();
+            document.getElementById('pub_start_date').value = todayStr;
+            document.getElementById('pub_end_date').value = todayStr;
+            loadPublicTableData();
+        };
+
+        // FUNGSI PORTAL LIHAT DATA (PUBLIC VIEWER)
+        window.openPublicViewerModal = async function() {
+            showToast('Memuat', 'Mengambil data terbaru dari sistem...', 'info');
+            await fetchAllDataSilent();
+            switchPublicTab('penjualan');
+            document.getElementById('publicViewerModal').classList.remove('hidden');
+        };
+
+        window.closePublicViewerModal = function() {
+            document.getElementById('publicViewerModal').classList.add('hidden');
+        };
+
+        window.switchPublicTab = function(tabName) {
+            window.currentPublicTab = tabName;
+            document.querySelectorAll('.pub-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white', 'shadow');
+                btn.classList.add('bg-white', 'text-gray-600', 'hover:bg-gray-100');
+            });
+            const activeBtn = document.getElementById(`pubTabBtn-${tabName}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-gray-600', 'hover:bg-gray-100');
+                activeBtn.classList.add('bg-blue-600', 'text-white', 'shadow');
+            }
+
+            const tableContent = document.getElementById('pub-content-table');
+            const saldoContent = document.getElementById('pub-content-saldo');
+
+            if (tabName === 'saldo') {
+                tableContent.classList.add('hidden');
+                saldoContent.classList.remove('hidden');
+                loadPublicSaldoData();
+            } else {
+                saldoContent.classList.add('hidden');
+                tableContent.classList.remove('hidden');
+                loadPublicTableData();
+            }
+        };
+
+        window.loadPublicTableData = function() {
+            const type = window.currentPublicTab;
+            const container = document.getElementById('pubTableContainer');
+            let data = window.appData[type] || [];
+
+            const startDate = document.getElementById('pub_start_date').value;
+            const endDate = document.getElementById('pub_end_date').value;
+
+            if (startDate && endDate) {
+                data = data.filter(item => item.tanggal >= startDate && item.tanggal <= endDate);
+            }
+
+            if (data.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-gray-400 text-sm">Belum ada data tersedia pada rentang tanggal ini.</div>`;
+                return;
+            }
+            data.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            let html = `<table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
+                        <th class="p-3">Tanggal</th>
+                        ${type !== 'pembagian' ? '<th class="p-3">Nama Barang</th><th class="p-3">Berat/Satuan</th><th class="p-3">Qty</th><th class="p-3">Harga</th>' : '<th class="p-3">Diterima</th><th class="p-3">Nama Tim</th><th class="p-3">Jumlah Orang</th><th class="p-3">Jumlah Uang</th>'}
+                        <th class="p-3">Total</th>
+                        <th class="p-3 text-center">Foto Dokumentasi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">`;
+
+            data.forEach(item => {
+                html += `<tr class="hover:bg-gray-50">
+                    <td class="p-3 font-medium">${formatDateID(item.tanggal)}</td>`;
+                if (type !== 'pembagian') {
+                    html += `<td class="p-3">${item.namaBarang}</td>
+                             <td class="p-3 text-gray-500">${item.berat}</td>
+                             <td class="p-3">${item.banyaknya}</td>
+                             <td class="p-3">${formatRupiah(parseFloat(item.harga))}</td>`;
+                } else {
+                    html += `<td class="p-3 font-semibold text-gray-800">${item.namaTim || '-'}</td>
+                             <td class="p-3 text-emerald-700 font-medium">${item.namaTimOtomatis || getNamaTimAutomatic(item.namaTim)}</td>
+                             <td class="p-3 text-center">${item.jumlahOrang || '-'} Orang</td>
+                             <td class="p-3">${formatRupiah(parseFloat(item.jumlahUang))}</td>`;
+                }
+                html += `<td class="p-3 font-bold text-emerald-700">${formatRupiah(item.rawJumlah)}</td>`;
+                
+                html += `<td class="p-3 text-center"><div class="flex justify-center gap-2 flex-wrap items-center">`;
+                if (item.driveUrls && item.driveUrls.length > 0) {
+                    item.driveUrls.forEach((url) => {
+                        let directImgUrl = url;
+                        if (url.includes('drive.google.com')) {
+                            const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+                            if (fileIdMatch && fileIdMatch[1]) {
+                                directImgUrl = `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}`;
+                            }
+                        }
+                        html += `<div class="relative group">
+                            <img src="${directImgUrl}" onclick="openMediaModal('${directImgUrl}')" class="w-14 h-14 object-cover rounded-xl border-2 border-blue-500 shadow-sm cursor-pointer hover:scale-105 transition" alt="Foto" onerror="this.onerror=null; this.src='https://via.placeholder.com/64?text=FOTO';">
+                        </div>`;
+                    });
+                } else {
+                    html += `<span class="text-xs text-gray-400">Tidak ada foto</span>`;
+                }
+                html += `</div></td></tr>`;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        };
+
+        window.loadPublicSaldoData = function() {
+            const totalPemasukan = window.appData.penjualan.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            const totalPembagian = window.appData.pembagian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            const totalPembelianBarang = window.appData.pembelian.reduce((acc, item) => acc + (item.rawJumlah || 0), 0);
+            
+            let saldoGlobalBersih = totalPemasukan - totalPembagian - window.saldoPembelianKhusus - totalPembelianBarang;
+
+            document.getElementById('pub_saldoGlobalDisplay').innerText = formatRupiah(saldoGlobalBersih);
+            document.getElementById('pub_saldoPemasukanDisplay').innerText = formatRupiah(totalPemasukan);
+            document.getElementById('pub_saldoPembelianDisplay').innerText = formatRupiah(window.saldoPembelianKhusus);
+            document.getElementById('pub_saldoPengeluaranDisplay').innerText = formatRupiah(totalPembagian);
+
+            const startDate = document.getElementById('pub_start_date').value;
+            const endDate = document.getElementById('pub_end_date').value;
+
+            let combinedList = [];
+            window.appData.penjualan.forEach(item => combinedList.push({ ...item, jenisTransaksi: 'Penjualan', masuk: item.rawJumlah, keluar: 0 }));
+            window.appData.pembelian.forEach(item => combinedList.push({ ...item, jenisTransaksi: 'Pembelian', masuk: 0, keluar: item.rawJumlah }));
+            window.appData.pembagian.forEach(item => combinedList.push({ ...item, jenisTransaksi: 'Pembagian', masuk: 0, keluar: item.rawJumlah }));
+
+            if (startDate && endDate) {
+                combinedList = combinedList.filter(item => item.tanggal >= startDate && item.tanggal <= endDate);
+            }
+
+            combinedList.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            const container = document.getElementById('pubTableContainer_saldo');
+            if (combinedList.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-400 text-sm">Tidak ada riwayat saldo pada rentang tanggal ini.</div>`;
+                return;
+            }
+
+            let html = `<table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider border-b">
+                        <th class="p-3">Tanggal</th>
+                        <th class="p-3">Jenis Transaksi</th>
+                        <th class="p-3">Keterangan / Detail</th>
+                        <th class="p-3 text-right">Pemasukan (+)</th>
+                        <th class="p-3 text-right">Pengeluaran (-)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">`;
+
+            combinedList.forEach(item => {
+                let ket = item.namaBarang || item.namaTim || '-';
+                if(item.jenisTransaksi === 'Pembagian') ket += ` (${item.namaTimOtomatis || '-'})`;
+                html += `<tr class="hover:bg-gray-50">
+                    <td class="p-3 font-medium">${formatDateID(item.tanggal)}</td>
+                    <td class="p-3 font-semibold ${item.jenisTransaksi === 'Penjualan' ? 'text-emerald-600' : (item.jenisTransaksi === 'Pembelian' ? 'text-blue-600' : 'text-red-600')}">${item.jenisTransaksi}</td>
+                    <td class="p-3 text-gray-700">${ket}</td>
+                    <td class="p-3 text-right font-bold text-emerald-600">${item.masuk > 0 ? formatRupiah(item.masuk) : '-'}</td>
+                    <td class="p-3 text-right font-bold text-red-600">${item.keluar > 0 ? formatRupiah(item.keluar) : '-'}</td>
+                </tr>`;
+            });
+
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        };
+
+        window.openPublicNotaPreview = function() {
+            if (window.currentPublicTab === 'saldo') {
+                showToast('Informasi', 'Unduh nota tersedia pada tab Penjualan, Pembelian, atau Pembagian.', 'info');
+                return;
+            }
+            const startDate = document.getElementById('pub_start_date').value;
+            const endDate = document.getElementById('pub_end_date').value;
+            const type = window.currentPublicTab;
+            window.currentNotaDownloadInfo = { type, startDate, endDate };
+
+            let data = window.appData[type] || [];
+            if (startDate && endDate) {
+                data = data.filter(item => item.tanggal >= startDate && item.tanggal <= endDate);
+            }
+
+            if (data.length === 0) {
+                showToast('Perhatian', 'Tidak ada data untuk dicetak pada rentang tanggal tersebut!', 'error');
+                return;
+            }
+
+            buildNotaTemplate(type, data, startDate, endDate);
+            document.getElementById('notaPreviewWrapper').innerHTML = document.getElementById('notaBox').outerHTML;
+            document.getElementById('notaPreviewModal').classList.remove('hidden');
         };
 
         window.handleLogin = async function(e) {
@@ -1461,7 +1773,6 @@
                 }
                 html += `<td class="p-3 font-bold text-emerald-700">${formatRupiah(item.rawJumlah)}</td>`;
                 
-                // TAMPILAN FOTO DI TABEL RIWAYAT
                 html += `<td class="p-3 text-center"><div class="flex justify-center gap-2 flex-wrap items-center">`;
                 if (item.driveUrls && item.driveUrls.length > 0) {
                     item.driveUrls.forEach((url) => {
@@ -1485,7 +1796,6 @@
                 html += `</div></td>`;
 
                 if (role === 'admin') {
-                    // Tombol hapus sekarang otomatis mengirimkan ID file foto agar terhapus juga dari Google Drive
                     let fileIdsAttr = item.driveFileIds ? JSON.stringify(item.driveFileIds).replace(/"/g, '&quot;') : '[]';
                     html += `<td class="p-3 text-center">
                         <div class="flex items-center justify-center space-x-2">
@@ -1542,13 +1852,11 @@
             }
         };
 
-        // FUNGSI HAPUS DATA & SINKRONISASI PENGHAPUSAN FILE DI GOOGLE DRIVE
         window.deleteData = function(type, id, rawJumlah, fileIds = []) {
             showCustomConfirm('Hapus Data', 'Apakah Anda yakin ingin menghapus data transaksi ini beserta foto di Sistem?', async function() {
                 try {
                     showToast('Memproses', 'Menghapus data & file foto di Sistem...', 'info');
                     
-                    // Hapus file terkait dari Google Drive via Apps Script
                     if (fileIds && fileIds.length > 0) {
                         await fetch(APPS_SCRIPT_URL, {
                             method: 'POST',
@@ -1556,7 +1864,6 @@
                         });
                     }
 
-                    // Hapus dokumen dari Firestore
                     await deleteDoc(doc(db, type, id));
                     if (type === 'pembelian') {
                         window.saldoPembelianKhusus += rawJumlah;
@@ -1684,7 +1991,7 @@
                 showToast('Gagal', 'Terjadi kesalahan saat memperbarui data.', 'error');
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1.5"></i>Simpan Perubahan`;
+                submitBtn.innerText = 'Simpan Perubahan';
             }
         };
 
